@@ -1,0 +1,25 @@
+[project]
+name = "cloud-storage-syncer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "FATESAIKOU", email = "qzsecftbhhhh@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "mypy>=1.17.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-html>=4.1.1",
+    "ruff>=0.12.5",
+    "typer>=0.16.0",
+]
+
+[project.scripts]
+cloud-storage-syncer = "cloud_storage_syncer:main"
+
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
