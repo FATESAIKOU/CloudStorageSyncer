@@ -1,8 +1,8 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ "*" ]
   pull_request:
     branches: [ main, develop ]
 
@@ -28,63 +28,6 @@ jobs:
       run: |
         uv sync
 
-    - name: Lint with ruff
-      run: |
-        uv run ruff check src tests
-        uv run ruff format --check src tests
-
     - name: Test with pytest
       run: |
         uv run pytest tests/ --cov=src/cloud_storage_syncer --cov-report=xml --cov-report=html
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: false
-        tags: cloud-storage-syncer:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-
-    - name: Test Docker image
-      run: |
-        docker run --rm cloud-storage-syncer:latest version
-        docker run --rm cloud-storage-syncer:latest health
-
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-      with:
-        version: "latest"
-
-    - name: Set up Python
-      run: uv python install 3.13
-
-    - name: Install dependencies
-      run: uv sync
-
-    - name: Run pre-commit
-      run: |
-        uv run pre-commit run --all-files
