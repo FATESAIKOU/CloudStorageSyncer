@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  cloud-storage-syncer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloud-storage-syncer
+    volumes:
+      # Mount local directory for file operations (when needed)
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app/src
+    command: ["info"]
+    # For development, you can override the command
+    # docker-compose run --rm cloud-storage-syncer version
+
+  # Development service with live reload
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloud-storage-syncer-dev
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment
+    environment:
+      - PYTHONPATH=/app/src
+    working_dir: /app
+    command: ["info"]
+    # Use this for development with live code changes
