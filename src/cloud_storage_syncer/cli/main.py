@@ -4,11 +4,17 @@ import typer
 
 from cloud_storage_syncer import __description__, __version__
 
+from .commands import config_commands, upload_commands
+
 app = typer.Typer(
     name="cloud-storage-syncer",
     help=__description__,
     add_completion=False,
 )
+
+# Add command groups
+app.add_typer(config_commands.app, name="config", help="Manage S3 configuration")
+app.add_typer(upload_commands.app, name="upload", help="Upload files to S3")
 
 
 @app.command()
