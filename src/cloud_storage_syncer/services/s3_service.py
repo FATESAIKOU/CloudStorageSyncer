@@ -149,3 +149,44 @@ class S3Service:
         except Exception as e:
             logger.error(f"Unexpected error getting object info: {e}")
             return None
+
+    def list_objects(self, prefix: str = "", max_keys: int = 1000) -> list[dict]:
+        """List objects in the S3 bucket.
+
+        Args:
+            prefix: Prefix to filter objects
+            max_keys: Maximum number of objects to return
+
+        Returns:
+            List of object information dictionaries
+        """
+        try:
+            paginator = self.client.get_paginator("list_objects_v2")
+            page_iterator = paginator.paginate(
+                Bucket=self.config.bucket,
+                Prefix=prefix,
+                PaginationConfig={"MaxItems": max_keys},
+            )
+
+            objects = []
+            for page in page_iterator:
+                if "Contents" in page:
+                    for obj in page["Contents"]:
+                        objects.append(
+                            {
+                                "key": obj["Key"],
+                                "size": obj["Size"],
+                                "last_modified": obj["LastModified"],
+                                "etag": obj["ETag"],
+                                "storage_class": obj.get("StorageClass", "STANDARD"),
+                            }
+                        )
+
+            return objects
+
+        except ClientError as e:
+            logger.error(f"Error listing objects: {e}")
+            return []
+        except Exception as e:
+            logger.error(f"Unexpected error listing objects: {e}")
+            return []
