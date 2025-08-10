@@ -389,8 +389,7 @@ class S3Service:
 
         Args:
             s3_prefix: S3 prefix to delete (acts as directory)
-            force: Whether to skip confirmation (currently not used but kept for
-                consistency)
+            force: Whether to suppress "not found" errors
 
         Returns:
             List of DeleteResult for each file
