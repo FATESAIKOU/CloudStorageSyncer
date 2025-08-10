@@ -4,7 +4,13 @@ import typer
 
 from cloud_storage_syncer import __description__, __version__
 
-from .commands import config_commands, list_commands, upload_commands
+from .commands import (
+    config_commands,
+    delete_commands,
+    download_commands,
+    list_commands,
+    upload_commands,
+)
 
 app = typer.Typer(
     name="cloud-storage-syncer",
@@ -16,6 +22,8 @@ app = typer.Typer(
 app.add_typer(config_commands.app, name="config", help="Manage S3 configuration")
 app.add_typer(upload_commands.app, name="upload", help="Upload files to S3")
 app.add_typer(list_commands.app, name="list", help="List and search S3 files")
+app.add_typer(download_commands.app, name="download", help="Download files from S3")
+app.add_typer(delete_commands.app, name="delete", help="Delete files from S3")
 
 
 @app.command()

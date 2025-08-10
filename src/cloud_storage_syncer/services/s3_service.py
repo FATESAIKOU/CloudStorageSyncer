@@ -6,7 +6,14 @@ from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from ..models import S3Config, UploadRequest, UploadResult
+from ..models import (
+    DeleteResult,
+    DownloadRequest,
+    DownloadResult,
+    S3Config,
+    UploadRequest,
+    UploadResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,3 +197,113 @@ class S3Service:
         except Exception as e:
             logger.error(f"Unexpected error listing objects: {e}")
             return []
+
+    def file_exists(self, s3_key: str) -> bool:
+        """Check if a file exists in S3.
+
+        Args:
+            s3_key: S3 object key to check
+
+        Returns:
+            True if file exists, False otherwise
+        """
+        try:
+            self.client.head_object(Bucket=self.config.bucket, Key=s3_key)
+            return True
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                return False
+            logger.error(f"Error checking if file exists: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error checking file existence: {e}")
+            return False
+
+    def download_file(self, request: DownloadRequest) -> DownloadResult:
+        """Download a file from S3 to local filesystem.
+
+        Args:
+            request: Download request with S3 key and output path
+
+        Returns:
+            DownloadResult with success/failure information
+        """
+        try:
+            # Check if S3 file exists
+            if not self.file_exists(request.s3_key):
+                return DownloadResult.error_result(
+                    request.s3_key, f"File not found in S3: {request.s3_key}"
+                )
+
+            # Determine local storage path
+            local_path = request.get_local_path()
+
+            # Check if local file already exists
+            if local_path.exists() and not request.overwrite:
+                return DownloadResult.error_result(
+                    request.s3_key,
+                    f"Local file already exists: {local_path}. "
+                    f"Use --overwrite to replace it.",
+                )
+
+            # Create target directory if it doesn't exist
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Download file
+            self.client.download_file(
+                self.config.bucket, request.s3_key, str(local_path)
+            )
+
+            # Get file size
+            file_size = local_path.stat().st_size
+
+            logger.info(
+                f"Successfully downloaded {request.s3_key} to {local_path} "
+                f"({file_size} bytes)"
+            )
+
+            return DownloadResult.success_result(
+                request.s3_key, str(local_path), file_size
+            )
+
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            logger.error(f"AWS client error during download: {e}")
+            return DownloadResult.error_result(
+                request.s3_key, f"AWS error ({error_code}): {e}"
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error during download: {e}")
+            return DownloadResult.error_result(request.s3_key, f"Download failed: {e}")
+
+    def delete_file(self, s3_key: str) -> DeleteResult:
+        """Delete a file from S3.
+
+        Args:
+            s3_key: S3 object key to delete
+
+        Returns:
+            DeleteResult with success/failure information
+        """
+        try:
+            # Check if file exists before deletion
+            existed = self.file_exists(s3_key)
+
+            # Execute delete operation
+            # Note: S3 delete_object is idempotent - doesn't fail if file doesn't exist
+            self.client.delete_object(Bucket=self.config.bucket, Key=s3_key)
+
+            logger.info(
+                f"Delete operation completed for s3://{self.config.bucket}/{s3_key} "
+                f"(existed: {existed})"
+            )
+
+            return DeleteResult.success_result(s3_key, existed)
+
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            logger.error(f"AWS client error during delete: {e}")
+            return DeleteResult.error_result(s3_key, f"AWS error ({error_code}): {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error during delete: {e}")
+            return DeleteResult.error_result(s3_key, f"Delete failed: {e}")
