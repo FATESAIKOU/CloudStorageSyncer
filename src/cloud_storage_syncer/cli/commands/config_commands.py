@@ -113,9 +113,6 @@ def test(
 @app.command()
 def remove(
     config_path: Annotated[Path | None, typer.Option(help="Config file path")] = None,
-    force: Annotated[
-        bool, typer.Option("--force", "-f", help="Skip confirmation")
-    ] = False,
 ):
     """Remove configuration file."""
     config_service = ConfigService(config_path)
@@ -123,14 +120,6 @@ def remove(
     if not config_service.config_exists():
         typer.echo("❌ No configuration file found.", err=True)
         raise typer.Exit(1)
-
-    if not force:
-        confirm = typer.confirm(
-            f"Are you sure you want to remove {config_service.config_path}?"
-        )
-        if not confirm:
-            typer.echo("Cancelled.")
-            raise typer.Exit(0)
 
     if config_service.delete_config():
         typer.echo("✅ Configuration removed successfully.")
