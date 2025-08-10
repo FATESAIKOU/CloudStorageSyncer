@@ -5,21 +5,19 @@ A powerful command-line tool for managing AWS S3 storage with complete CRUD oper
 ## 🚀 Core Operations
 
 ```mermaid
-graph LR
-    A[Local Files] --> B[CloudStorageSyncer CLI]
-    B --> C[AWS S3]
+flowchart TD
+    CLI[CloudStorageSyncer CLI] --> Upload[📤 Upload]
+    CLI --> List[📋 List/Search]
+    CLI --> Download[📥 Download]
+    CLI --> Delete[🗑️ Delete]
 
-    subgraph "CRUD Operations"
-        D[📤 Create/Upload]
-        E[📋 Read/List/Search]
-        F[📥 Read/Download]
-        G[🗑️ Delete]
-    end
+    Upload --> S3[(AWS S3 Bucket)]
+    List --> S3
+    Download --> S3
+    Delete --> S3
 
-    B --> D
-    B --> E
-    B --> F
-    B --> G
+    style CLI fill:#e1f5fe
+    style S3 fill:#fff3e0
 ```
 
 ### Quick Examples
@@ -75,13 +73,22 @@ uv run cloud-storage-syncer config test
 ## 📚 Command Reference
 
 ### File Operations
-| Operation | Command | Example |
-|-----------|---------|---------|
-| **Upload** | `upload file <path>` | `upload file ./doc.pdf --s3-key docs/doc.pdf` |
-| **Download** | `download file <s3-key>` | `download file docs/doc.pdf --output-path ./doc.pdf` |
-| **List** | `list files [--prefix]` | `list files --prefix docs/` |
-| **Search** | `list search --pattern` | `list search --pattern "*.pdf"` |
-| **Delete** | `delete file <s3-key>` | `delete file docs/doc.pdf` |
+```bash
+# Upload file
+uv run cloud-storage-syncer upload file ./doc.pdf --s3-key docs/doc.pdf
+
+# Download file
+uv run cloud-storage-syncer download file docs/doc.pdf --output-path ./doc.pdf
+
+# List files
+uv run cloud-storage-syncer list files --prefix docs/
+
+# Search files by pattern
+uv run cloud-storage-syncer list search --pattern "*.pdf"
+
+# Delete file
+uv run cloud-storage-syncer delete file docs/doc.pdf
+```
 
 ### Directory Operations
 ```bash
@@ -103,12 +110,8 @@ Use `--storage-class` with upload:
 ## 🏗️ Architecture
 
 ```mermaid
-graph TD
-    A[CLI Commands] --> B[Services Layer]
-    B --> C[Models Layer]
-    B --> D[AWS S3]
-
-    subgraph "CLI Commands"
+flowchart TD
+    subgraph "CLI Layer"
         A1[config]
         A2[upload]
         A3[download]
@@ -116,17 +119,32 @@ graph TD
         A5[delete]
     end
 
-    subgraph "Services"
+    subgraph "Services Layer"
         B1[ConfigService]
         B2[S3Service]
     end
 
-    subgraph "Models"
+    subgraph "Models Layer"
         C1[S3Config]
         C2[UploadRequest]
         C3[DownloadRequest]
         C4[DeleteRequest]
     end
+
+    A1 --> B1
+    A2 --> B2
+    A3 --> B2
+    A4 --> B2
+    A5 --> B2
+
+    B1 --> C1
+    B2 --> C2
+    B2 --> C3
+    B2 --> C4
+
+    B2 --> D[(AWS S3)]
+
+    style D fill:#fff3e0
 ```
 
 ## 🧪 Development
