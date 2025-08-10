@@ -6,11 +6,11 @@ from pathlib import Path
 
 @dataclass
 class DownloadRequest:
-    """Request for downloading a file from S3."""
+    """Request for downloading a file or directory from S3."""
 
     s3_key: str
     output_path: str | None = None
-    overwrite: bool = False
+    force: bool = False
 
     def __post_init__(self):
         """Post-initialization validation."""

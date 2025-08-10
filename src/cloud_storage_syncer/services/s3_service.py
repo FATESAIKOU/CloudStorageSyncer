@@ -239,11 +239,11 @@ class S3Service:
             local_path = request.get_local_path()
 
             # Check if local file already exists
-            if local_path.exists() and not request.overwrite:
+            if local_path.exists() and not request.force:
                 return DownloadResult.error_result(
                     request.s3_key,
                     f"Local file already exists: {local_path}. "
-                    f"Use --overwrite to replace it.",
+                    f"Use --force to replace it.",
                 )
 
             # Create target directory if it doesn't exist
@@ -307,3 +307,112 @@ class S3Service:
         except Exception as e:
             logger.error(f"Unexpected error during delete: {e}")
             return DeleteResult.error_result(s3_key, f"Delete failed: {e}")
+
+    def download_directory(
+        self, s3_prefix: str, local_base_path: Path, force: bool = False
+    ) -> list[DownloadResult]:
+        """Download all files with the given S3 prefix to a local directory.
+
+        Args:
+            s3_prefix: S3 prefix to download (acts as directory)
+            local_base_path: Local directory to download to
+            force: Whether to overwrite existing files
+
+        Returns:
+            List of DownloadResult for each file
+        """
+        results = []
+
+        try:
+            # List all objects with the prefix
+            objects = self.list_objects(prefix=s3_prefix)
+
+            if not objects:
+                return [
+                    DownloadResult.error_result(
+                        s3_prefix, "No files found with this prefix"
+                    )
+                ]
+
+            # Ensure prefix ends with / for directory-like behavior
+            normalized_prefix = (
+                s3_prefix.rstrip("/") + "/"
+                if s3_prefix and not s3_prefix.endswith("/")
+                else s3_prefix
+            )
+
+            for obj in objects:
+                s3_key = obj["key"]
+
+                # Skip if this is just the prefix itself (empty directory marker)
+                if s3_key == normalized_prefix:
+                    continue
+
+                # Calculate relative path within the directory
+                if normalized_prefix:
+                    if not s3_key.startswith(normalized_prefix):
+                        continue
+                    relative_path = s3_key[len(normalized_prefix) :]
+                else:
+                    relative_path = s3_key
+
+                # Skip empty relative paths (shouldn't happen but be safe)
+                if not relative_path:
+                    continue
+
+                # Create local path
+                local_file_path = local_base_path / relative_path
+
+                # Create download request
+                download_request = DownloadRequest(
+                    s3_key=s3_key, output_path=str(local_file_path), force=force
+                )
+
+                # Download the file
+                result = self.download_file(download_request)
+                results.append(result)
+
+        except Exception as e:
+            logger.error(f"Unexpected error during directory download: {e}")
+            results.append(
+                DownloadResult.error_result(
+                    s3_prefix, f"Directory download failed: {e}"
+                )
+            )
+
+        return results
+
+    def delete_directory(
+        self, s3_prefix: str, force: bool = False
+    ) -> list[DeleteResult]:
+        """Delete all files with the given S3 prefix.
+
+        Args:
+            s3_prefix: S3 prefix to delete (acts as directory)
+            force: Whether to skip confirmation (currently not used but kept for
+                consistency)
+
+        Returns:
+            List of DeleteResult for each file
+        """
+        results = []
+
+        try:
+            # List all objects with the prefix
+            objects = self.list_objects(prefix=s3_prefix)
+
+            if not objects:
+                return [DeleteResult.success_result(s3_prefix, existed=False)]
+
+            for obj in objects:
+                s3_key = obj["key"]
+                result = self.delete_file(s3_key)
+                results.append(result)
+
+        except Exception as e:
+            logger.error(f"Unexpected error during directory delete: {e}")
+            results.append(
+                DeleteResult.error_result(s3_prefix, f"Directory delete failed: {e}")
+            )
+
+        return results

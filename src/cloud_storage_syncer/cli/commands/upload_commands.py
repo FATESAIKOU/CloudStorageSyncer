@@ -13,74 +13,17 @@ app = typer.Typer()
 
 @app.command()
 def file(
-    file_path: Annotated[Path, typer.Argument(help="Path to file to upload")],
-    s3_key: Annotated[str | None, typer.Option(help="S3 key (path in bucket)")] = None,
-    storage_class: Annotated[
-        S3StorageClass | None, typer.Option(help="S3 storage class")
-    ] = None,
-    config_path: Annotated[Path | None, typer.Option(help="Config file path")] = None,
-):
-    """Upload a single file to S3."""
-    # Load configuration
-    config_service = ConfigService(config_path)
-    config = config_service.load_config()
-
-    if not config:
-        typer.echo("❌ No configuration found. Run 'config setup' first.", err=True)
-        raise typer.Exit(1)
-
-    # Validate file exists
-    if not file_path.exists():
-        typer.echo(f"❌ File not found: {file_path}", err=True)
-        raise typer.Exit(1)
-
-    if not file_path.is_file():
-        typer.echo(f"❌ Path is not a file: {file_path}", err=True)
-        raise typer.Exit(1)
-
-    # Generate S3 key if not provided
-    if not s3_key:
-        s3_key = file_path.name
-
-    # Default storage class
-    if not storage_class:
-        storage_class = S3StorageClass.STANDARD
-
-    # Create upload request
-    request = UploadRequest(
-        file_path=str(file_path), s3_key=s3_key, storage_class=storage_class
-    )
-
-    # Upload file
-    typer.echo(f"📤 Uploading {file_path.name} to s3://{config.bucket}/{s3_key}")
-
-    s3_service = S3Service(config)
-    result = request.upload_with_service(s3_service)
-
-    if result.success:
-        typer.echo("✅ Upload successful!")
-        typer.echo(f"   S3 URL: {result.s3_url}")
-        typer.echo(f"   Storage Class: {result.storage_class}")
-    else:
-        typer.echo(f"❌ Upload failed: {result.error_message}", err=True)
-        raise typer.Exit(1)
-
-
-@app.command()
-def directory(
-    dir_path: Annotated[Path, typer.Argument(help="Directory to upload")],
-    prefix: Annotated[
-        str | None, typer.Option(help="S3 prefix for uploaded files")
-    ] = None,
+    path: Annotated[Path, typer.Argument(help="Path to file or directory to upload")],
+    s3_key: Annotated[str | None, typer.Option(help="S3 key/prefix for upload")] = None,
     storage_class: Annotated[
         S3StorageClass | None, typer.Option(help="S3 storage class")
     ] = None,
     recursive: Annotated[
-        bool, typer.Option("--recursive", "-r", help="Upload recursively")
+        bool, typer.Option("--recursive", "-r", help="Upload directory recursively")
     ] = False,
     config_path: Annotated[Path | None, typer.Option(help="Config file path")] = None,
 ):
-    """Upload all files in a directory to S3."""
+    """Upload a file or directory to S3."""
     # Load configuration
     config_service = ConfigService(config_path)
     config = config_service.load_config()
@@ -89,154 +32,92 @@ def directory(
         typer.echo("❌ No configuration found. Run 'config setup' first.", err=True)
         raise typer.Exit(1)
 
-    # Validate directory exists
-    if not dir_path.exists():
-        typer.echo(f"❌ Directory not found: {dir_path}", err=True)
-        raise typer.Exit(1)
-
-    if not dir_path.is_dir():
-        typer.echo(f"❌ Path is not a directory: {dir_path}", err=True)
+    # Validate path exists
+    if not path.exists():
+        typer.echo(f"❌ Path not found: {path}", err=True)
         raise typer.Exit(1)
 
     # Default storage class
     if not storage_class:
         storage_class = S3StorageClass.STANDARD
 
-    # Find files to upload
-    pattern = "**/*" if recursive else "*"
-    files = [f for f in dir_path.glob(pattern) if f.is_file()]
-
-    if not files:
-        typer.echo("❌ No files found to upload.", err=True)
-        raise typer.Exit(1)
-
-    typer.echo(f"📂 Found {len(files)} files to upload")
-
-    # Upload files
     s3_service = S3Service(config)
-    success_count = 0
-    failed_files = []
 
-    for file_path in files:
-        # Generate S3 key
-        relative_path = file_path.relative_to(dir_path)
-        s3_key = str(relative_path)
-
-        if prefix:
-            s3_key = f"{prefix.rstrip('/')}/{s3_key}"
+    if path.is_file():
+        # Upload single file
+        # Generate S3 key if not provided
+        if not s3_key:
+            s3_key = path.name
 
         # Create upload request
         request = UploadRequest(
-            file_path=str(file_path), s3_key=s3_key, storage_class=storage_class
+            file_path=str(path), s3_key=s3_key, storage_class=storage_class
         )
 
-        typer.echo(f"📤 Uploading {relative_path}")
+        # Upload file
+        typer.echo(f"📤 Uploading {path.name} to s3://{config.bucket}/{s3_key}")
+
         result = request.upload_with_service(s3_service)
 
         if result.success:
-            success_count += 1
-            typer.echo(f"   ✅ {result.s3_url}")
+            typer.echo("✅ Upload successful!")
+            typer.echo(f"   🗂️  S3 URL: {result.s3_url}")
+            typer.echo(f"   📦 Storage Class: {result.storage_class}")
         else:
-            failed_files.append((file_path, result.error_message))
-            typer.echo(f"   ❌ Failed: {result.error_message}")
+            typer.echo(f"❌ Upload failed: {result.error_message}", err=True)
+            raise typer.Exit(1)
 
-    # Summary
-    typer.echo("\n📊 Upload Summary:")
-    typer.echo(f"   ✅ Successful: {success_count}")
-    typer.echo(f"   ❌ Failed: {len(failed_files)}")
+    elif path.is_dir():
+        # Upload directory
+        # Find files to upload
+        pattern = "**/*" if recursive else "*"
+        files = [f for f in path.glob(pattern) if f.is_file()]
 
-    if failed_files:
-        typer.echo("\n❌ Failed uploads:")
-        for file_path, error in failed_files:
-            typer.echo(f"   {file_path}: {error}")
-        raise typer.Exit(1)
+        if not files:
+            typer.echo("❌ No files found to upload.", err=True)
+            raise typer.Exit(1)
 
+        typer.echo(f"📂 Found {len(files)} files to upload")
 
-@app.command()
-def batch(
-    file_list: Annotated[
-        Path, typer.Argument(help="Text file containing list of files to upload")
-    ],
-    storage_class: Annotated[
-        S3StorageClass | None, typer.Option(help="S3 storage class")
-    ] = None,
-    config_path: Annotated[Path | None, typer.Option(help="Config file path")] = None,
-):
-    """Upload files from a list."""
-    # Load configuration
-    config_service = ConfigService(config_path)
-    config = config_service.load_config()
+        # Upload files
+        success_count = 0
+        failed_files = []
 
-    if not config:
-        typer.echo("❌ No configuration found. Run 'config setup' first.", err=True)
-        raise typer.Exit(1)
+        for file_path in files:
+            # Generate S3 key
+            relative_path = file_path.relative_to(path)
+            file_s3_key = str(relative_path)
 
-    # Read file list
-    if not file_list.exists():
-        typer.echo(f"❌ File list not found: {file_list}", err=True)
-        raise typer.Exit(1)
+            if s3_key:
+                file_s3_key = f"{s3_key.rstrip('/')}/{file_s3_key}"
 
-    try:
-        with open(file_list) as f:
-            file_paths = [line.strip() for line in f if line.strip()]
-    except Exception as e:
-        typer.echo(f"❌ Error reading file list: {e}", err=True)
-        raise typer.Exit(1) from e
+            # Create upload request
+            request = UploadRequest(
+                file_path=str(file_path),
+                s3_key=file_s3_key,
+                storage_class=storage_class,
+            )
 
-    if not file_paths:
-        typer.echo("❌ No files found in the list.", err=True)
-        raise typer.Exit(1)
+            typer.echo(f"📤 Uploading {relative_path}")
+            result = request.upload_with_service(s3_service)
 
-    # Default storage class
-    if not storage_class:
-        storage_class = S3StorageClass.STANDARD
+            if result.success:
+                success_count += 1
+                typer.echo(f"   ✅ s3://{config.bucket}/{file_s3_key}")
+            else:
+                failed_files.append((file_path, result.error_message))
+                typer.echo(f"   ❌ Failed: {result.error_message}")
 
-    typer.echo(f"📂 Found {len(file_paths)} files to upload")
+        # Summary
+        typer.echo("\n📊 Upload Summary:")
+        typer.echo(f"   ✅ Successful: {success_count}")
+        typer.echo(f"   ❌ Failed: {len(failed_files)}")
 
-    # Upload files
-    s3_service = S3Service(config)
-    success_count = 0
-    failed_files = []
-
-    for file_path_str in file_paths:
-        file_path = Path(file_path_str)
-
-        # Validate file exists
-        if not file_path.exists():
-            failed_files.append((file_path, "File not found"))
-            typer.echo(f"❌ File not found: {file_path}")
-            continue
-
-        if not file_path.is_file():
-            failed_files.append((file_path, "Not a file"))
-            typer.echo(f"❌ Not a file: {file_path}")
-            continue
-
-        # Use filename as S3 key
-        s3_key = file_path.name
-
-        # Create upload request
-        request = UploadRequest(
-            file_path=str(file_path), s3_key=s3_key, storage_class=storage_class
-        )
-
-        typer.echo(f"📤 Uploading {file_path.name}")
-        result = request.upload_with_service(s3_service)
-
-        if result.success:
-            success_count += 1
-            typer.echo(f"   ✅ {result.s3_url}")
-        else:
-            failed_files.append((file_path, result.error_message))
-            typer.echo(f"   ❌ Failed: {result.error_message}")
-
-    # Summary
-    typer.echo("\n📊 Upload Summary:")
-    typer.echo(f"   ✅ Successful: {success_count}")
-    typer.echo(f"   ❌ Failed: {len(failed_files)}")
-
-    if failed_files:
-        typer.echo("\n❌ Failed uploads:")
-        for file_path, error in failed_files:
-            typer.echo(f"   {file_path}: {error}")
+        if failed_files:
+            typer.echo("\n❌ Failed uploads:")
+            for file_path, error in failed_files:
+                typer.echo(f"   {file_path}: {error}")
+            raise typer.Exit(1)
+    else:
+        typer.echo(f"❌ Path is neither file nor directory: {path}", err=True)
         raise typer.Exit(1)
