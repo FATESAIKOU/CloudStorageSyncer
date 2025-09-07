@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "key": "documents/report.pdf",
+      "size": 1048576,
+      "last_modified": "2024-12-01T10:30:00Z"
+    },
+    {
+      "key": "images/photo1.jpg",
+      "size": 2097152,
+      "last_modified": "2024-12-02T15:45:00Z"
+    },
+    {
+      "key": "data/config.json",
+      "size": 512,
+      "last_modified": "2024-12-03T09:15:00Z"
+    }
+  ],
+  "success": true,
+  "message": "Files retrieved successfully"
+}

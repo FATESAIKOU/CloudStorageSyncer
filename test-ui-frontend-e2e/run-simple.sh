@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 完全自包含的測試執行腳本
+# 完全自包含的測試執行腳本 (使用 WireMock)
 set -e
 
 cd "$(dirname "$0")"
@@ -11,7 +11,8 @@ pkill -f "mock-server.py" || true
 pkill -f "vite.*dev" || true
 pkill -f "node.*vite" || true
 pkill -f "npm.*dev" || true
-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+docker-compose down 2>/dev/null || true
+lsof -ti:8080 | xargs kill -9 2>/dev/null || true
 lsof -ti:5173 | xargs kill -9 2>/dev/null || true
 lsof -ti:5174 | xargs kill -9 2>/dev/null || true
 lsof -ti:5175 | xargs kill -9 2>/dev/null || true
@@ -27,26 +28,28 @@ npx playwright install chromium --with-deps > /dev/null 2>&1
 # 清理舊的測試結果
 rm -rf playwright-report/ test-results/
 
-echo "🚀 Starting Mock API Server..."
-python3 mock-server.py &
-API_PID=$!
+echo "🚀 Starting WireMock with Docker..."
+docker-compose up -d
 
-echo "⏳ Waiting for API server to start..."
-for i in {1..10}; do
-    if curl -s http://localhost:8000/files/list > /dev/null 2>&1; then
-        echo "✅ Mock API Server is ready!"
+echo "⏳ Waiting for WireMock to start..."
+for i in {1..30}; do
+    if curl -s http://localhost:8080/__admin/health > /dev/null 2>&1; then
+        echo "✅ WireMock is ready!"
         break
     fi
-    echo "   Attempt $i/10... waiting"
+    echo "   Attempt $i/30... waiting"
     sleep 2
 done
 
-# 驗證 API 服務器
-if ! curl -s http://localhost:8000/files/list > /dev/null 2>&1; then
-    echo "❌ Failed to start Mock API Server"
-    kill $API_PID 2>/dev/null || true
+# 驗證 WireMock 服務器
+if ! curl -s http://localhost:8080/__admin/health > /dev/null 2>&1; then
+    echo "❌ Failed to start WireMock"
+    docker-compose down
     exit 1
 fi
+
+echo "🔍 Testing WireMock endpoints..."
+curl -s http://localhost:8080/files/list > /dev/null && echo "   Files endpoint accessible"
 
 echo "🚀 Starting Frontend..."
 cd ../src/web-ui
@@ -58,7 +61,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # 啟動前端（背景執行）
-VITE_API_BASE_URL=http://localhost:8000 npm run dev > /dev/null 2>&1 &
+VITE_API_BASE_URL=http://localhost:8080 npm run dev > /dev/null 2>&1 &
 FRONTEND_PID=$!
 cd ../../test-ui-frontend-e2e
 
@@ -78,14 +81,14 @@ done
 
 if [ -z "$FRONTEND_URL" ]; then
     echo "❌ Failed to start Frontend"
-    kill $API_PID 2>/dev/null || true
+    docker-compose down
     kill $FRONTEND_PID 2>/dev/null || true
     exit 1
 fi
 
 echo "🧪 Running tests..."
 export FRONTEND_URL=$FRONTEND_URL
-npx playwright test tests/basic.spec.js --reporter=line
+npx playwright test --reporter=line
 
 TEST_RESULT=$?
 
@@ -102,7 +105,7 @@ fi
 
 echo ""
 echo "🧹 Cleaning up services..."
-kill $API_PID 2>/dev/null || true
+docker-compose down
 kill $FRONTEND_PID 2>/dev/null || true
 
 echo "✅ Testing complete!"

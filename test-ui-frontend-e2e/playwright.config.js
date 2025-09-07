@@ -11,7 +11,7 @@ export default defineConfig({
     ['line']
   ],
   use: {
-    baseURL: process.env.FRONTEND_URL || 'http://localhost:5174',
+    baseURL: process.env.FRONTEND_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -23,4 +23,5 @@ export default defineConfig({
     },
   ],
   timeout: 30000,
+  testDir: './tests/testscripts',
 });

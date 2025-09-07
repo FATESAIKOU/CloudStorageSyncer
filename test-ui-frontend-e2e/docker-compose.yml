@@ -1,0 +1,18 @@
+services:
+  wiremock:
+    image: wiremock/wiremock:3.3.1
+    container_name: test-wiremock
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings
+      - ./wiremock/__files:/home/wiremock/__files
+    command:
+      - --global-response-templating
+      - --disable-banner
+      - --verbose
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/__admin/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

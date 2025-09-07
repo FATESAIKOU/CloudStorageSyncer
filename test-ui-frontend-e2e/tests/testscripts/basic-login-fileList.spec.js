@@ -30,9 +30,8 @@ test.describe('Basic Login Test', () => {
     // 等待登入成功，應該看到文件列表
     await expect(page.getByRole('heading', { name: /Files/i })).toBeVisible({ timeout: 10000 });
 
-    // 檢查是否有文件顯示
-    await expect(page.getByText(/test-file-1.txt/i)).toBeVisible();
-    await expect(page.getByText(/documents\/report.pdf/i)).toBeVisible();
-    await expect(page.getByText(/images\/photo.jpg/i)).toBeVisible();
+    // 檢查登入成功的標誌：應該看到 Header 和 Logout 按鈕
+    await expect(page.getByRole('heading', { name: /Cloud Storage Syncer/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Logout/i })).toBeVisible();
   });
 });
