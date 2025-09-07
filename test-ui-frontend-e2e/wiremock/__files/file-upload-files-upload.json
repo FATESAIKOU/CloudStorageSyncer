@@ -1,9 +1,0 @@
-{
-  "success": true,
-  "message": "File uploaded successfully",
-  "data": {
-    "key": "test-upload.txt",
-    "size": 31,
-    "last_modified": "2024-12-04T10:30:00Z"
-  }
-}

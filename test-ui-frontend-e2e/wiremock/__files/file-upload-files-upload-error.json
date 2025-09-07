@@ -1,6 +1,0 @@
-{
-  "success": false,
-  "message": "Upload failed",
-  "error": "File too large. Maximum size is 5MB.",
-  "error_code": "FILE_TOO_LARGE"
-}
