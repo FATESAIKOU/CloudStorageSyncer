@@ -1,0 +1,15 @@
+{
+  "name": "frontend-e2e-tests",
+  "version": "1.0.0",
+  "description": "Frontend E2E tests with Playwright and WireMock",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
