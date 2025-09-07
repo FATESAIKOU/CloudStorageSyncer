@@ -1,39 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
-import LoginForm from './components/LoginForm';
-import Header from './components/Header';
-import FileList from './components/FileList';
+import LoginPage from './pages/LoginPage/pageMain';
+import FileListPage from './pages/FileListPage/pageMain';
+import { loadAuthData, clearAuthData, isAuthDataValid, isAuthExpired } from './utils/auth';
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [authData, setAuthData] = useState(null);
 
+  // 處理登入成功
   const handleLoginSuccess = (userData) => {
-    setUser(userData);
+    setAuthData(userData);
   };
 
+  // 處理登出
   const handleLogout = () => {
-    setUser(null);
+    clearAuthData();
+    setAuthData(null);
   };
 
+  // 處理認證錯誤
   const handleAuthError = (errorMessage) => {
     console.error('Auth error:', errorMessage);
-    setUser(null);
+    clearAuthData();
+    setAuthData(null);
   };
 
-  if (!user) {
-    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+  // 初始化時檢查儲存的認證資料
+  useEffect(() => {
+    const savedAuthData = loadAuthData();
+
+    if (savedAuthData && isAuthDataValid(savedAuthData) && !isAuthExpired(savedAuthData)) {
+      setAuthData(savedAuthData);
+    } else {
+      clearAuthData();
+    }
+  }, []);
+
+  // 如果沒有認證資料，顯示登入頁面
+  if (!authData) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // 已認證，顯示檔案列表頁面
   return (
-    <div className="app">
-      <Header onLogout={handleLogout} />
-      <main className="main-content">
-        <FileList
-          authHeader={user.authHeader}
-          onAuthError={handleAuthError}
-        />
-      </main>
-    </div>
+    <FileListPage
+      authData={authData}
+      onLogout={handleLogout}
+      onAuthError={handleAuthError}
+    />
   );
 }
 

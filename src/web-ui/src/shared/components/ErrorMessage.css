@@ -1,0 +1,34 @@
+.error-message {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 10px 0;
+  color: #c33;
+  font-size: 14px;
+}
+
+.error-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-text {
+  flex: 1;
+}
+
+.error-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #c33;
+  padding: 0;
+  margin-left: 10px;
+  line-height: 1;
+}
+
+.error-close:hover {
+  color: #a11;
+}
