@@ -24,20 +24,9 @@ function FileListPage({ authData, onLogout, onAuthError }) {
       const response = await fileAPI.list(authData.authHeader, prefix);
 
       if (response.success) {
-        // 後端返回的數據格式是 { data: { files: [...] } }
-        const rawFiles = response.data?.files || response.data || [];
-
-        // 轉換數據格式以符合前端期望
-        const formattedFiles = rawFiles.map(file => ({
-          key: file.key,
-          size: file.size,
-          lastModified: file.last_modified,
-          storageClass: file.storage_class,
-          isDirectory: file.key.endsWith('/'),
-          etag: file.etag
-        }));
-
-        setFiles(formattedFiles);
+        // 直接使用後端返回的數據格式
+        const filesData = response.data?.files || [];
+        setFiles(filesData);
         setCurrentPath(prefix);
       } else {
         if (response.error_code === 'AUTH_001' || response.error_code === 'AUTH_002') {
@@ -68,20 +57,9 @@ function FileListPage({ authData, onLogout, onAuthError }) {
       const response = await fileAPI.search(authData.authHeader, pattern, currentPath);
 
       if (response.success) {
-        // 後端返回的數據格式是 { data: { files: [...] } }
-        const rawFiles = response.data?.files || response.data || [];
-
-        // 轉換數據格式以符合前端期望
-        const formattedFiles = rawFiles.map(file => ({
-          key: file.key,
-          size: file.size,
-          lastModified: file.last_modified,
-          storageClass: file.storage_class,
-          isDirectory: file.key.endsWith('/'),
-          etag: file.etag
-        }));
-
-        setFiles(formattedFiles);
+        // 直接使用後端返回的數據格式
+        const filesData = response.data?.files || [];
+        setFiles(filesData);
       } else {
         if (response.error_code === 'AUTH_001' || response.error_code === 'AUTH_002') {
           onAuthError('認證失效，請重新登入');

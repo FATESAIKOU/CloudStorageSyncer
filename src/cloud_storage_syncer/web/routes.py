@@ -146,35 +146,47 @@ async def download_file(request: Request, s3_key: str):
     try:
         s3_service = get_s3_service()
 
-        # Create download request
-        download_request = DownloadRequest(
-            s3_key=s3_key,
-            output_path="",  # We'll stream the content
-        )
+        # Create a unique temporary file to download to
+        import os
+        import tempfile
+        import uuid
 
-        # Download file
-        result = s3_service.download_file(download_request)
+        # Use with statement to ensure proper cleanup
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create unique filename to avoid conflicts
+            unique_filename = f"download_{uuid.uuid4().hex}_{s3_key.replace('/', '_')}"
+            temp_path = os.path.join(temp_dir, unique_filename)
 
-        if result.success and result.file_content:
-            # Create streaming response
-            return StreamingResponse(
-                io.BytesIO(result.file_content),
-                media_type="application/octet-stream",
-                headers={
-                    "Content-Disposition": (
-                        f"attachment; filename={s3_key.split('/')[-1]}"
-                    )
-                },
-            )
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail=ApiResponse.error_response(
-                    error=result.error_message or "File not found",
-                    error_code=ApiErrorCode.FILE_NOT_FOUND,
-                    message="File not found or download failed",
-                ).dict(),
-            )
+            # Create download request with temporary file path
+            download_request = DownloadRequest(s3_key=s3_key, output_path=temp_path)
+
+            # Download file to temporary location
+            result = s3_service.download_file(download_request)
+
+            if result.success:
+                # Read the downloaded file content
+                with open(temp_path, "rb") as f:
+                    file_content = f.read()
+
+                # Create streaming response
+                return StreamingResponse(
+                    io.BytesIO(file_content),
+                    media_type="application/octet-stream",
+                    headers={
+                        "Content-Disposition": (
+                            f"attachment; filename={s3_key.split('/')[-1]}"
+                        )
+                    },
+                )
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail=ApiResponse.error_response(
+                        error=result.error_message or "File not found",
+                        error_code=ApiErrorCode.FILE_NOT_FOUND,
+                        message="File not found or download failed",
+                    ).dict(),
+                )
 
     except HTTPException:
         raise

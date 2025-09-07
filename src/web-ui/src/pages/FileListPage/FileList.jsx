@@ -12,8 +12,8 @@ function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
   }
 
   // 分離目錄和檔案
-  const directories = files.filter(file => file.isDirectory);
-  const regularFiles = files.filter(file => !file.isDirectory);
+  const directories = files.filter(file => file.key.endsWith('/'));
+  const regularFiles = files.filter(file => !file.key.endsWith('/'));
 
   return (
     <div className="file-list">

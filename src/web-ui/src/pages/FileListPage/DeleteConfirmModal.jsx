@@ -1,6 +1,8 @@
 import './DeleteConfirmModal.css';
 
 function DeleteConfirmModal({ file, onConfirm, onCancel }) {
+  const isDirectory = file.key.endsWith('/');
+
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -11,15 +13,15 @@ function DeleteConfirmModal({ file, onConfirm, onCancel }) {
 
         <div className="modal-body">
           <div className="delete-warning">
-            ⚠️ 您確定要刪除此{file.isDirectory ? '資料夾' : '檔案'}嗎？
+            ⚠️ 您確定要刪除此{isDirectory ? '資料夾' : '檔案'}嗎？
           </div>
 
           <div className="file-info">
             <div className="file-icon">
-              {file.isDirectory ? '📁' : '📄'}
+              {isDirectory ? '📁' : '📄'}
             </div>
             <div className="file-name">
-              {file.isDirectory
+              {isDirectory
                 ? file.key.replace(/\/$/, '').split('/').pop() || file.key.replace(/\/$/, '')
                 : file.key.split('/').pop() || file.key
               }
@@ -27,7 +29,7 @@ function DeleteConfirmModal({ file, onConfirm, onCancel }) {
           </div>
 
           <div className="delete-note">
-            {file.isDirectory
+            {isDirectory
               ? '此操作將刪除資料夾及其所有內容，且無法復原。'
               : '此操作無法復原。'
             }

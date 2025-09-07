@@ -2,8 +2,10 @@ import './FileItem.css';
 import { formatFileSize, formatDate, getFileIcon } from '../../utils/constants';
 
 function FileItem({ file, onDownload, onDelete, onNavigate }) {
+  const isDirectory = file.key.endsWith('/');
+
   const handleClick = () => {
-    if (file.isDirectory) {
+    if (isDirectory) {
       onNavigate(file.key);
     }
   };
@@ -20,34 +22,31 @@ function FileItem({ file, onDownload, onDelete, onNavigate }) {
 
   return (
     <div
-      className={`file-item ${file.isDirectory ? 'directory' : 'file'}`}
+      className={`file-item ${isDirectory ? 'directory' : 'file'}`}
       onClick={handleClick}
     >
       <div className="file-info">
         <div className="file-icon">
-          {file.isDirectory ? '📁' : getFileIcon(file.key)}
+          {isDirectory ? '📁' : getFileIcon(file.key)}
         </div>
 
         <div className="file-details">
           <div className="file-name">
-            {file.isDirectory
-              ? file.key.replace(/\/$/, '').split('/').pop() || file.key.replace(/\/$/, '')
-              : file.key.split('/').pop() || file.key
-            }
+            {file.key}
           </div>
 
           <div className="file-meta">
-            {!file.isDirectory && (
+            {!isDirectory && (
               <>
                 <span className="file-size">
                   {formatFileSize(file.size)}
                 </span>
                 <span className="file-date">
-                  {formatDate(file.lastModified)}
+                  {formatDate(file.last_modified)}
                 </span>
-                {file.storageClass && (
+                {file.storage_class && (
                   <span className="file-storage">
-                    {file.storageClass}
+                    {file.storage_class}
                   </span>
                 )}
               </>
