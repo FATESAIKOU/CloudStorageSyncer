@@ -1,7 +1,0 @@
-{
-  "success": false,
-  "data": null,
-  "message": "Invalid credentials",
-  "error": "Username or password incorrect",
-  "error_code": "AUTH_002"
-}

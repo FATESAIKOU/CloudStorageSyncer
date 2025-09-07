@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/files/upload",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "contains": "large-file.txt"
+      }
+    ]
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    },
+    "bodyFileName": "file-upload-files-upload-error.json"
+  },
+  "priority": 1
+}

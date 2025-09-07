@@ -23,5 +23,4 @@ export default defineConfig({
     },
   ],
   timeout: 30000,
-  testDir: './tests/testscripts',
 });
