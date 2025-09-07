@@ -19,18 +19,18 @@ test.describe('FileListPage - File List Display', () => {
 
     // 確認有目錄項目
     await expect(page.locator('.file-item.directory')).toBeVisible();
-    await expect(page.locator('.file-item.directory .file-name')).toHaveText('documents');
+    await expect(page.locator('.file-item.directory .file-name')).toHaveText('documents/');
 
     // 確認有檔案項目
     const fileItems = page.locator('.file-item.file');
     await expect(fileItems).toHaveCount(2);
 
-    // 確認第一個檔案
+    // 確認第一個檔案 - 現在顯示完整路徑
     const firstFile = fileItems.first();
     await expect(firstFile.locator('.file-name')).toHaveText('example.txt');
     await expect(firstFile.locator('.file-size')).toContainText('1.5 KB');
 
-    // 確認第二個檔案
+    // 確認第二個檔案 - 現在顯示完整路徑
     const secondFile = fileItems.nth(1);
     await expect(secondFile.locator('.file-name')).toHaveText('image.jpg');
     await expect(secondFile.locator('.file-size')).toContainText('2.3 MB');

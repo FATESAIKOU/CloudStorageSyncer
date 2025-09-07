@@ -1,4 +1,5 @@
 {
+  "priority": 1,
   "scenarioName": "FileListState",
   "requiredScenarioState": "FileDeleted",
   "request": {
@@ -20,25 +21,29 @@
     },
     "jsonBody": {
       "success": true,
-      "data": [
-        {
-          "key": "documents/",
-          "size": 0,
-          "lastModified": "2025-01-01T10:00:00Z",
-          "storageClass": null,
-          "isDirectory": true
-        },
-        {
-          "key": "image.jpg",
-          "size": 2411520,
-          "lastModified": "2025-01-01T08:15:00Z",
-          "storageClass": "STANDARD",
-          "isDirectory": false
-        }
-      ],
-      "message": "檔案列表載入成功",
-      "error": null,
-      "error_code": null
+      "data": {
+        "files": [
+          {
+            "key": "documents/",
+            "size": 0,
+            "last_modified": "2025-01-01T10:00:00Z",
+            "etag": "\"d41d8cd98f00b204e9800998ecf8427e\"",
+            "storage_class": null
+          },
+          {
+            "key": "image.jpg",
+            "size": 2411520,
+            "last_modified": "2025-01-01T08:15:00Z",
+            "etag": "\"b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7\"",
+            "storage_class": "STANDARD"
+          }
+        ],
+        "total_count": 2,
+        "prefix": ""
+      },
+      "message": "Found 2 files",
+      "error": "",
+      "error_code": ""
     }
   }
 }

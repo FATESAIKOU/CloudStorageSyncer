@@ -17,7 +17,6 @@ from ..web.models import (
     ApiResponse,
     FileDeleteResponse,
     FileListResponse,
-    FileSearchResponse,
     FileUploadResponse,
 )
 
@@ -201,6 +200,43 @@ async def download_file(request: Request, s3_key: str):
         ) from e
 
 
+@router.get("/search")
+async def search_files(
+    request: Request,
+    pattern: str = Query(..., description="Search pattern"),
+    prefix: str = Query("", description="Prefix to limit search scope"),
+):
+    """Search files in S3 bucket."""
+    require_auth(request)
+
+    try:
+        s3_service = get_s3_service()
+
+        # Get all objects with prefix
+        all_objects = s3_service.list_objects(prefix=prefix, max_keys=1000)
+
+        # Filter by pattern (simple substring search)
+        matching_files = [
+            obj for obj in all_objects if pattern.lower() in obj.get("Key", "").lower()
+        ]
+
+        return ApiResponse.success_response(
+            data={
+                "files": matching_files,
+                "total_count": len(matching_files),
+                "prefix": prefix,
+            },
+            message=f"Found {len(matching_files)} matching files",
+        )
+
+    except Exception as e:
+        return ApiResponse.error_response(
+            error=str(e),
+            error_code=ApiErrorCode.SEARCH_FAILED,
+            message="Failed to search files",
+        )
+
+
 @router.delete("/{s3_key:path}")
 async def delete_file(request: Request, s3_key: str):
     """Delete file from S3 bucket."""
@@ -240,41 +276,4 @@ async def delete_file(request: Request, s3_key: str):
             error=str(e),
             error_code=ApiErrorCode.DELETE_FAILED,
             message="Failed to delete file",
-        )
-
-
-@router.get("/search")
-async def search_files(
-    request: Request,
-    pattern: str = Query(..., description="Search pattern"),
-    prefix: str = Query("", description="Prefix to limit search scope"),
-):
-    """Search files in S3 bucket."""
-    require_auth(request)
-
-    try:
-        s3_service = get_s3_service()
-
-        # Get all objects with prefix
-        all_objects = s3_service.list_objects(prefix=prefix, max_keys=1000)
-
-        # Filter by pattern (simple substring search)
-        matching_files = [
-            obj for obj in all_objects if pattern.lower() in obj.get("Key", "").lower()
-        ]
-
-        return ApiResponse.success_response(
-            data=FileSearchResponse(
-                files=matching_files,
-                total_count=len(matching_files),
-                search_pattern=pattern,
-            ).dict(),
-            message=f"Found {len(matching_files)} matching files",
-        )
-
-    except Exception as e:
-        return ApiResponse.error_response(
-            error=str(e),
-            error_code=ApiErrorCode.SEARCH_FAILED,
-            message="Failed to search files",
         )
