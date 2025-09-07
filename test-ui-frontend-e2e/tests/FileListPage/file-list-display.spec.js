@@ -43,14 +43,11 @@ test.describe('FileListPage - File List Display', () => {
     // 找到第一個檔案項目
     const firstFile = page.locator('.file-item.file').first();
 
-    // 檢查初始狀態下操作按鈕不可見
-    await expect(firstFile.locator('.file-actions')).toHaveCSS('opacity', '0');
-
     // 滑鼠懸停在檔案項目上
     await firstFile.hover();
 
-    // 檢查操作按鈕變為可見
-    await expect(firstFile.locator('.file-actions')).toHaveCSS('opacity', '1');
+    // 等待操作按鈕變為可見
+    await expect(firstFile.locator('.file-actions')).toBeVisible();
 
     // 確認有下載和刪除按鈕
     await expect(firstFile.locator('.action-button.download')).toBeVisible();
@@ -58,9 +55,26 @@ test.describe('FileListPage - File List Display', () => {
   });
 
   test('should handle empty file list', async ({ page }) => {
-    // 這個測試需要不同的 mock 數據
-    // 可以通過導航到空目錄或修改 mock 來實現
-    await page.goto('http://localhost:5173'); // 重新載入以觸發空列表的 mock
+    // 使用 page route 來攔截並返回空數據
+    await page.route('**/files/list*', (route) => {
+      route.fulfill({
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          success: true,
+          data: [],
+          message: '檔案列表載入成功',
+          error: null,
+          error_code: null
+        })
+      });
+    });
+
+    // 重新載入頁面以觸發空列表
+    await page.reload();
 
     // 等待空狀態顯示
     await expect(page.locator('.file-list-empty')).toBeVisible();

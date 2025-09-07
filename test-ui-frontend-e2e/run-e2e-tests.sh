@@ -2,12 +2,11 @@
 
 # E2E 測試執行腳本
 # 功能：啟動測試服務 -> 執行測試 -> 關閉測試服務
+# 基於 run-simple.sh 的改進版本
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WIREMOCK_PORT=8000
-FRONTEND_PORT=5173
+cd "$(dirname "$0")"
 
 echo "🚀 開始 E2E 測試..."
 
@@ -15,11 +14,8 @@ echo "🚀 開始 E2E 測試..."
 cleanup() {
     echo "🧹 清理背景程序..."
 
-    # 關閉 WireMock
-    if [ ! -z "$WIREMOCK_PID" ]; then
-        echo "關閉 WireMock (PID: $WIREMOCK_PID)"
-        kill $WIREMOCK_PID 2>/dev/null || true
-    fi
+    # 關閉 Docker Compose 服務
+    docker-compose down 2>/dev/null || true
 
     # 關閉前端開發伺服器
     if [ ! -z "$FRONTEND_PID" ]; then
@@ -27,111 +23,122 @@ cleanup() {
         kill $FRONTEND_PID 2>/dev/null || true
     fi
 
-    # 等待程序完全關閉
-    sleep 2
+    # 清理可能占用端口的程序
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    lsof -ti:5173 | xargs kill -9 2>/dev/null || true
+    lsof -ti:5174 | xargs kill -9 2>/dev/null || true
+    lsof -ti:5175 | xargs kill -9 2>/dev/null || true
+    lsof -ti:5176 | xargs kill -9 2>/dev/null || true
 
+    sleep 2
     echo "✅ 清理完成"
 }
 
 # 設置陷阱以確保清理
 trap cleanup EXIT INT TERM
 
-# 1. 啟動 WireMock 服務
-echo "🔧 啟動 WireMock 服務 (Port: $WIREMOCK_PORT)..."
-cd "$SCRIPT_DIR"
+echo "🧹 停止所有現有服務..."
+# 停止所有可能的服務
+pkill -f "vite.*dev" || true
+pkill -f "node.*vite" || true
+pkill -f "npm.*dev" || true
+docker-compose down 2>/dev/null || true
+cleanup
 
-# 檢查是否有 WireMock jar 檔案
-WIREMOCK_JAR="wiremock-standalone-3.0.1.jar"
-if [ ! -f "$WIREMOCK_JAR" ]; then
-    echo "下載 WireMock..."
-    curl -o "$WIREMOCK_JAR" https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/3.0.1/wiremock-standalone-3.0.1.jar
-fi
+echo "� 安裝 Node.js 依賴..."
+npm install --silent
 
-# 啟動 WireMock
-java -jar "$WIREMOCK_JAR" \
-    --port $WIREMOCK_PORT \
-    --root-dir . \
-    --verbose \
-    --global-response-templating &
-WIREMOCK_PID=$!
+echo "🎭 安裝 Playwright 瀏覽器..."
+npx playwright install chromium --with-deps > /dev/null 2>&1
 
-echo "WireMock 已啟動 (PID: $WIREMOCK_PID)"
+# 清理舊的測試結果
+rm -rf playwright-report/ test-results/
 
-# 2. 啟動前端開發伺服器
-echo "🔧 啟動前端開發伺服器 (Port: $FRONTEND_PORT)..."
-cd "$SCRIPT_DIR/../src/web-ui"
+echo "🚀 使用 Docker Compose 啟動 WireMock..."
+docker-compose up -d
 
-# 安裝依賴（如果需要）
-if [ ! -d "node_modules" ]; then
-    echo "安裝前端依賴..."
-    npm install
-fi
+echo "⏳ 等待 WireMock 啟動..."
+for i in {1..30}; do
+    if curl -s http://localhost:8080/__admin/health > /dev/null 2>&1; then
+        echo "✅ WireMock 已就緒！"
+        break
+    fi
+    echo "   嘗試 $i/30... 等待中"
+    sleep 2
+done
 
-# 啟動開發伺服器
-npm run dev &
-FRONTEND_PID=$!
-
-echo "前端開發伺服器已啟動 (PID: $FRONTEND_PID)"
-
-# 3. 等待服務啟動
-echo "⏳ 等待服務啟動..."
-sleep 10
-
-# 檢查服務是否正常運行
-echo "🔍 檢查服務狀態..."
-
-# 檢查 WireMock
-if curl -s "http://localhost:$WIREMOCK_PORT/__admin" > /dev/null; then
-    echo "✅ WireMock 服務正常"
-else
-    echo "❌ WireMock 服務啟動失敗"
+# 驗證 WireMock 服務器
+if ! curl -s http://localhost:8080/__admin/health > /dev/null 2>&1; then
+    echo "❌ WireMock 啟動失敗"
     exit 1
 fi
 
-# 檢查前端服務
-if curl -s "http://localhost:$FRONTEND_PORT" > /dev/null; then
-    echo "✅ 前端服務正常"
-else
-    echo "❌ 前端服務啟動失敗"
+echo "🔍 測試 WireMock 端點..."
+curl -s http://localhost:8080/files/list > /dev/null && echo "   檔案端點可存取"
+
+echo "� 啟動前端..."
+cd ../src/web-ui
+
+# 確保前端依賴已安裝
+if [ ! -d "node_modules" ]; then
+    echo "📦 安裝前端依賴..."
+    npm install --silent
+fi
+
+# 啟動前端（背景執行）
+VITE_API_BASE_URL=http://localhost:8080 npm run dev > /dev/null 2>&1 &
+FRONTEND_PID=$!
+cd ../../test-ui-frontend-e2e
+
+echo "⏳ 等待前端啟動..."
+FRONTEND_URL=""
+for port in 5173 5174 5175 5176 5177; do
+    for i in {1..15}; do
+        if curl -s http://localhost:$port > /dev/null 2>&1; then
+            FRONTEND_URL="http://localhost:$port"
+            echo "✅ 前端已在端口 $port 準備就緒！"
+            break 2
+        fi
+        echo "   檢查端口 $port... 嘗試 $i/15"
+        sleep 2
+    done
+done
+
+if [ -z "$FRONTEND_URL" ]; then
+    echo "❌ 前端啟動失敗"
     exit 1
 fi
 
 # 4. 執行測試
 echo "🧪 執行 E2E 測試..."
-cd "$SCRIPT_DIR"
-
-# 安裝測試依賴（如果需要）
-if [ ! -d "node_modules" ]; then
-    echo "安裝測試依賴..."
-    npm install
-fi
+export FRONTEND_URL=$FRONTEND_URL
 
 # 執行測試
 if [ "$1" = "--headed" ]; then
     echo "執行有頭模式測試..."
-    npx playwright test --headed
+    npx playwright test --headed --reporter=line
 elif [ "$1" = "--debug" ]; then
     echo "執行除錯模式測試..."
-    npx playwright test --debug
+    npx playwright test --debug --reporter=line
 else
     echo "執行無頭模式測試..."
-    npx playwright test
+    npx playwright test --reporter=line
 fi
 
 TEST_EXIT_CODE=$?
 
 # 5. 顯示測試結果
 if [ $TEST_EXIT_CODE -eq 0 ]; then
-    echo "✅ 測試通過！"
+    echo ""
+    echo "🎉 所有測試通過！"
+    echo "📋 測試報告已儲存在 playwright-report/"
 else
+    echo ""
     echo "❌ 測試失敗！"
+    echo "📸 截圖和影片已儲存在 test-results/"
+    echo "� 測試報告已儲存在 playwright-report/"
 fi
 
-# 6. 生成測試報告
-if [ -d "test-results" ]; then
-    echo "📊 生成測試報告..."
-    npx playwright show-report
-fi
-
+echo ""
 echo "🏁 E2E 測試完成"
 exit $TEST_EXIT_CODE

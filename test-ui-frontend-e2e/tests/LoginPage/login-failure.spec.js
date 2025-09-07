@@ -25,7 +25,11 @@ test.describe('LoginPage - Login Failure', () => {
     // 前往登入頁面
     await page.goto('http://localhost:5173');
 
-    // 直接點擊登入按鈕，不輸入任何資訊
+    // 清空預設的輸入值
+    await page.fill('input[type="text"]', '');
+    await page.fill('input[type="password"]', '');
+
+    // 點擊登入按鈕
     await page.click('button[type="submit"]');
 
     // 等待錯誤訊息出現

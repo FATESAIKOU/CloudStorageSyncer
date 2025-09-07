@@ -35,7 +35,18 @@ function LoginForm({ onLoginStart, onLoginSuccess, onLoginError }) {
       }
     } catch (error) {
       console.error('Login error:', error);
-      onLoginError('連線失敗，請檢查網路或伺服器狀態');
+
+      // API 函數已經解析了錯誤訊息
+      const errorMessage = error.message;
+      if (errorMessage.includes('認證失敗') || errorMessage.includes('Invalid credentials')) {
+        onLoginError('認證失敗');
+      } else if (errorMessage.includes('Failed to fetch')) {
+        onLoginError('連線失敗');
+      } else if (errorMessage.includes('HTTP error')) {
+        onLoginError('連線失敗，請檢查網路或伺服器狀態');
+      } else {
+        onLoginError(errorMessage);
+      }
     }
   };
 
@@ -49,7 +60,6 @@ function LoginForm({ onLoginStart, onLoginSuccess, onLoginError }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="請輸入帳號"
-          required
         />
       </div>
 
@@ -61,7 +71,6 @@ function LoginForm({ onLoginStart, onLoginSuccess, onLoginError }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="請輸入密碼"
-          required
         />
       </div>
 

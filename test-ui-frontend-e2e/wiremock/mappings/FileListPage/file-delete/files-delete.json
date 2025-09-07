@@ -1,0 +1,32 @@
+{
+  "scenarioName": "FileListState",
+  "requiredScenarioState": "Started",
+  "newScenarioState": "FileDeleted",
+  "request": {
+    "method": "DELETE",
+    "urlPathPattern": "/files/example\\.txt",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    },
+    "jsonBody": {
+      "success": true,
+      "data": {
+        "deleted_key": "example.txt"
+      },
+      "message": "檔案刪除成功",
+      "error": null,
+      "error_code": null
+    }
+  }
+}

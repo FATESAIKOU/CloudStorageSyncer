@@ -30,7 +30,10 @@ function FileItem({ file, onDownload, onDelete, onNavigate }) {
 
         <div className="file-details">
           <div className="file-name">
-            {file.key.split('/').pop() || file.key}
+            {file.isDirectory
+              ? file.key.replace(/\/$/, '').split('/').pop() || file.key.replace(/\/$/, '')
+              : file.key.split('/').pop() || file.key
+            }
           </div>
 
           <div className="file-meta">

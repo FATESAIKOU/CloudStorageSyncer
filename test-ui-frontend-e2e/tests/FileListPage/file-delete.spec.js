@@ -27,7 +27,7 @@ test.describe('FileOperations - File Delete', () => {
     await expect(page.locator('.modal-overlay')).toBeVisible();
     await expect(page.locator('.modal-content h3')).toHaveText('確認刪除');
     await expect(page.locator('.delete-warning')).toContainText('您確定要刪除此檔案嗎？');
-    await expect(page.locator('.file-name')).toHaveText('example.txt');
+    await expect(page.locator('.modal-content .file-name')).toHaveText('example.txt');
 
     // 確認有取消和確認按鈕
     await expect(page.locator('.btn-secondary')).toHaveText('取消');
@@ -54,6 +54,66 @@ test.describe('FileOperations - File Delete', () => {
   });
 
   test('should delete file successfully', async ({ page }) => {
+    // 設置刪除後的檔案列表 mock
+    let deleteCompleted = false;
+
+    await page.route('**/files/list*', (route) => {
+      if (deleteCompleted) {
+        // 刪除後返回較少的檔案
+        route.fulfill({
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: JSON.stringify({
+            success: true,
+            data: [
+              {
+                key: "documents/",
+                size: 0,
+                lastModified: "2025-01-01T10:00:00Z",
+                storageClass: null,
+                isDirectory: true
+              },
+              {
+                key: "image.jpg",
+                size: 2411520,
+                lastModified: "2025-01-01T08:15:00Z",
+                storageClass: "STANDARD",
+                isDirectory: false
+              }
+            ],
+            message: "檔案列表載入成功",
+            error: null,
+            error_code: null
+          })
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.route('**/files/example.txt', (route) => {
+      if (route.request().method() === 'DELETE') {
+        deleteCompleted = true;
+        route.fulfill({
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: JSON.stringify({
+            success: true,
+            data: { deleted_key: "example.txt" },
+            message: "檔案刪除成功",
+            error: null,
+            error_code: null
+          })
+        });
+      }
+    });
+
     // 觸發刪除確認對話框
     const firstFile = page.locator('.file-item.file').first();
     await firstFile.hover();
@@ -69,13 +129,29 @@ test.describe('FileOperations - File Delete', () => {
     await expect(page.locator('.modal-overlay')).not.toBeVisible();
 
     // 等待檔案列表重新載入
-    // 這裡需要 mock 返回刪除後的檔案列表
     await expect(page.locator('.file-count')).toContainText('共 1 個資料夾，1 個檔案');
   });
 
   test('should handle delete error', async ({ page }) => {
     // 模擬刪除失敗的情況
-    // 這需要設置特定的 mock 來返回錯誤
+    await page.route('**/files/example.txt', (route) => {
+      if (route.request().method() === 'DELETE') {
+        route.fulfill({
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: JSON.stringify({
+            success: false,
+            data: null,
+            message: "刪除失敗，請稍後重試",
+            error: "Internal server error",
+            error_code: "FILE_003"
+          })
+        });
+      }
+    });
 
     const firstFile = page.locator('.file-item.file').first();
     await firstFile.hover();

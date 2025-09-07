@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/files/search",
+    "queryParameters": {
+      "pattern": {
+        "equalTo": "jpg"
+      }
+    },
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    },
+    "jsonBody": {
+      "success": true,
+      "data": [
+        {
+          "key": "image.jpg",
+          "size": 2411520,
+          "lastModified": "2025-01-01T08:15:00Z",
+          "storageClass": "STANDARD",
+          "isDirectory": false
+        }
+      ],
+      "message": "搜尋完成",
+      "error": null,
+      "error_code": null
+    }
+  }
+}

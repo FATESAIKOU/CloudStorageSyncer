@@ -1,0 +1,32 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/files/search",
+    "queryParameters": {
+      "pattern": {
+        "equalTo": "nonexistent"
+      }
+    },
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    },
+    "jsonBody": {
+      "success": true,
+      "data": [],
+      "message": "搜尋完成",
+      "error": null,
+      "error_code": null
+    }
+  }
+}

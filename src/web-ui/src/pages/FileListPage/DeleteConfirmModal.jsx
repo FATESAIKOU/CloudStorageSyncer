@@ -19,7 +19,10 @@ function DeleteConfirmModal({ file, onConfirm, onCancel }) {
               {file.isDirectory ? '📁' : '📄'}
             </div>
             <div className="file-name">
-              {file.key.split('/').pop() || file.key}
+              {file.isDirectory
+                ? file.key.replace(/\/$/, '').split('/').pop() || file.key.replace(/\/$/, '')
+                : file.key.split('/').pop() || file.key
+              }
             </div>
           </div>
 

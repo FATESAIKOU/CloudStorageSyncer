@@ -1,5 +1,5 @@
 // API 基礎配置
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // 預設的請求選項
 const defaultOptions = {
@@ -29,8 +29,21 @@ async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
+    // 對於 HTTP 錯誤狀態，嘗試解析 JSON 錯誤訊息
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          throw new Error(errorData.message);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } catch (jsonError) {
+        // 如果解析 JSON 失敗，使用預設錯誤訊息
+        if (jsonError.message && !jsonError.message.includes('Unexpected')) {
+          throw jsonError; // 重新拋出已解析的錯誤
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     }
 
     return await response.json();
