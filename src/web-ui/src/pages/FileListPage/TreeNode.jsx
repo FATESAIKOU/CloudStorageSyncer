@@ -2,7 +2,7 @@ import { useState } from 'react';
 import './TreeNode.css';
 import { formatFileSize, formatDate, getFileIcon } from '../../utils/constants';
 
-function TreeNode({ node, depth = 0, onDownload, onDelete, expandedPaths, onToggle }) {
+function TreeNode({ node, depth = 0, onDownload, onDelete, onUpload, expandedPaths, onToggle }) {
   const isExpanded = expandedPaths.has(node.path);
 
   const handleToggle = (e) => {
@@ -34,6 +34,13 @@ function TreeNode({ node, depth = 0, onDownload, onDelete, expandedPaths, onTogg
     });
   };
 
+  const handleUpload = (e) => {
+    e.stopPropagation();
+    if (node.isDirectory) {
+      onUpload(node.path);
+    }
+  };
+
   // 根節點不渲染
   if (node.isRoot) {
     return (
@@ -45,6 +52,7 @@ function TreeNode({ node, depth = 0, onDownload, onDelete, expandedPaths, onTogg
             depth={0}
             onDownload={onDownload}
             onDelete={onDelete}
+            onUpload={onUpload}
             expandedPaths={expandedPaths}
             onToggle={onToggle}
           />
@@ -101,6 +109,16 @@ function TreeNode({ node, depth = 0, onDownload, onDelete, expandedPaths, onTogg
 
         {/* 操作按鈕 */}
         <div className="tree-node-actions">
+          {node.isDirectory && (
+            <button
+              className="action-button upload"
+              onClick={handleUpload}
+              title="上傳檔案"
+            >
+              📤
+            </button>
+          )}
+
           {!node.isDirectory && (
             <button
               className="action-button download"
@@ -131,6 +149,7 @@ function TreeNode({ node, depth = 0, onDownload, onDelete, expandedPaths, onTogg
               depth={depth + 1}
               onDownload={onDownload}
               onDelete={onDelete}
+              onUpload={onUpload}
               expandedPaths={expandedPaths}
               onToggle={onToggle}
             />

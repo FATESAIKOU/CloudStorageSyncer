@@ -125,6 +125,11 @@
   border-color: #fca5a5;
 }
 
+.tree-node-actions .action-button.upload:hover {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+}
+
 .tree-node-children {
   width: 100%;
 }

@@ -95,6 +95,29 @@ function FileListPage({ authData, onLogout, onAuthError }) {
     }
   };
 
+  // 檔案上傳（純上傳函數，不含副作用）
+  const handleUpload = async (file, s3Key, storageClass) => {
+    try {
+      const response = await fileAPI.upload(authData.authHeader, file, s3Key, storageClass);
+
+      if (!response.success) {
+        if (response.error_code === 'AUTH_001' || response.error_code === 'AUTH_002') {
+          onAuthError('認證失效，請重新登入');
+        } else {
+          throw new Error(response.message || '上傳失敗');
+        }
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
+  // 上傳 Modal 完成時的回調（處理 reload）
+  const handleUploadModalComplete = async () => {
+    await loadFiles(currentPath);
+  };
+
   // 檔案刪除確認
   const handleDeleteClick = (file) => {
     setDeleteModal({ show: true, file });
@@ -109,8 +132,8 @@ function FileListPage({ authData, onLogout, onAuthError }) {
       const response = await fileAPI.delete(authData.authHeader, file.key);
 
       if (response.success) {
-        // 重新載入檔案列表
-        loadFiles(currentPath);
+        // 重新載入檔案列表並關閉刪除確認框
+        await loadFiles(currentPath);
       } else {
         if (response.error_code === 'AUTH_001' || response.error_code === 'AUTH_002') {
           onAuthError('認證失效，請重新登入');
@@ -160,6 +183,8 @@ function FileListPage({ authData, onLogout, onAuthError }) {
             files={files}
             onDownload={handleDownload}
             onDelete={handleDeleteClick}
+            onUpload={handleUpload}
+            onUploadComplete={handleUploadModalComplete}
             onNavigate={handleNavigate}
             currentPath={currentPath}
           />

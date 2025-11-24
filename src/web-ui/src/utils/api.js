@@ -53,6 +53,43 @@ async function apiRequest(endpoint, options = {}) {
   }
 }
 
+// Multipart form data 專用的 API 請求函數
+async function apiRequestMultipart(endpoint, options = {}) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const config = {
+    ...options,
+    headers: {
+      ...options.headers,
+      // 不設置 Content-Type，讓瀏覽器自動設置 multipart/form-data 和 boundary
+    },
+  };
+
+  try {
+    const response = await fetch(url, config);
+
+    // 對於 HTTP 錯誤狀態，嘗試解析 JSON 錯誤訊息
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          throw new Error(errorData.message);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } catch (jsonError) {
+        if (jsonError.message && !jsonError.message.includes('Unexpected')) {
+          throw jsonError;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API multipart request failed:', error);
+    throw error;
+  }
+}
+
 // 認證相關 API
 export const authAPI = {
   login: async (username, password) => {
@@ -84,11 +121,10 @@ export const fileAPI = {
     formData.append('s3_key', s3Key);
     formData.append('storage_class', storageClass);
 
-    return apiRequest('/files/upload', {
+    return apiRequestMultipart('/files/upload', {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
-        // 不設置 Content-Type，讓瀏覽器自動設置 multipart/form-data
       },
       body: formData,
     });

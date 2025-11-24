@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import './FileList.css';
 import TreeNode from './TreeNode';
+import UploadModal from './UploadModal';
 import { buildFileTree, getAllPaths } from '../../utils/fileTree';
 
-function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
+function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, onNavigate, currentPath }) {
   const [expandedPaths, setExpandedPaths] = useState(new Set());
+  const [uploadModal, setUploadModal] = useState({ show: false, targetPath: '' });
 
   // 構建樹狀結構
   const fileTree = useMemo(() => {
@@ -82,6 +84,22 @@ function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
     setExpandedPaths(new Set());
   };
 
+  const handleUploadClick = (targetPath) => {
+    setUploadModal({ show: true, targetPath });
+  };
+
+  const handleCloseUploadModal = () => {
+    setUploadModal({ show: false, targetPath: '' });
+  };
+
+  const handleUploadModalComplete = async () => {
+    // Modal 完成時，先關閉 Modal，再重新載入列表
+    handleCloseUploadModal();
+    if (onUploadComplete) {
+      await onUploadComplete();
+    }
+  };
+
   if (!files || files.length === 0) {
     return (
       <div className="file-list-empty">
@@ -121,10 +139,20 @@ function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
           node={fileTree}
           onDownload={onDownload}
           onDelete={onDelete}
+          onUpload={handleUploadClick}
           expandedPaths={expandedPaths}
           onToggle={handleToggle}
         />
       </div>
+
+      <UploadModal
+        show={uploadModal.show}
+        basePath={uploadModal.targetPath}
+        onClose={handleCloseUploadModal}
+        onComplete={handleUploadModalComplete}
+        onUpload={onUpload}
+        existingFiles={files}
+      />
     </div>
   );
 }
