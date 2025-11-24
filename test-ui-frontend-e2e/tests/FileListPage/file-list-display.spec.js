@@ -17,22 +17,23 @@ test.describe('FileListPage - File List Display', () => {
     // 確認檔案數量顯示
     await expect(page.locator('.file-count')).toContainText('共 1 個資料夾，2 個檔案');
 
-    // 確認有目錄項目
-    await expect(page.locator('.file-item.directory')).toBeVisible();
-    await expect(page.locator('.file-item.directory .file-name')).toHaveText('documents/');
+    // 確認有目錄節點 (TreeNode with directory class)
+    const directoryNodes = page.locator('.tree-node.directory');
+    await expect(directoryNodes.first()).toBeVisible();
+    await expect(directoryNodes.first().locator('.tree-node-name')).toHaveText('documents');
 
-    // 確認有檔案項目
-    const fileItems = page.locator('.file-item.file');
-    await expect(fileItems).toHaveCount(2);
+    // 確認有檔案節點
+    const fileNodes = page.locator('.tree-node.file');
+    await expect(fileNodes).toHaveCount(2);
 
-    // 確認第一個檔案 - 現在顯示完整路徑
-    const firstFile = fileItems.first();
-    await expect(firstFile.locator('.file-name')).toHaveText('example.txt');
+    // 確認第一個檔案
+    const firstFile = fileNodes.first();
+    await expect(firstFile.locator('.tree-node-name')).toHaveText('example.txt');
     await expect(firstFile.locator('.file-size')).toContainText('1.5 KB');
 
-    // 確認第二個檔案 - 現在顯示完整路徑
-    const secondFile = fileItems.nth(1);
-    await expect(secondFile.locator('.file-name')).toHaveText('image.jpg');
+    // 確認第二個檔案
+    const secondFile = fileNodes.nth(1);
+    await expect(secondFile.locator('.tree-node-name')).toHaveText('image.jpg');
     await expect(secondFile.locator('.file-size')).toContainText('2.3 MB');
   });
 
@@ -40,14 +41,14 @@ test.describe('FileListPage - File List Display', () => {
     // 等待檔案列表載入
     await expect(page.locator('.file-list')).toBeVisible();
 
-    // 找到第一個檔案項目
-    const firstFile = page.locator('.file-item.file').first();
+    // 找到第一個檔案節點
+    const firstFile = page.locator('.tree-node.file').first();
 
-    // 滑鼠懸停在檔案項目上
+    // 滑鼠懸停在檔案節點上
     await firstFile.hover();
 
-    // 等待操作按鈕變為可見
-    await expect(firstFile.locator('.file-actions')).toBeVisible();
+    // 等待操作按鈕變為可見 (TreeNode actions)
+    await expect(firstFile.locator('.tree-node-actions')).toBeVisible();
 
     // 確認有下載和刪除按鈕
     await expect(firstFile.locator('.action-button.download')).toBeVisible();
