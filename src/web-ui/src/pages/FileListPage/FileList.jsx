@@ -4,7 +4,7 @@ import TreeNode from './TreeNode';
 import UploadModal from './UploadModal';
 import { buildFileTree, getAllPaths } from '../../utils/fileTree';
 
-function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, onNavigate, currentPath }) {
+function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, currentPath }) {
   const [expandedPaths, setExpandedPaths] = useState(new Set());
   const [uploadModal, setUploadModal] = useState({ show: false, targetPath: '' });
 
@@ -151,7 +151,6 @@ function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, onN
         onClose={handleCloseUploadModal}
         onComplete={handleUploadModalComplete}
         onUpload={onUpload}
-        existingFiles={files}
       />
     </div>
   );

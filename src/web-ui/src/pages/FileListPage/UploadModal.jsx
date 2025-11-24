@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './UploadModal.css';
 import { STORAGE_CLASSES, formatFileSize } from '../../utils/constants';
 
-function UploadModal({ show, basePath, onClose, onComplete, onUpload, existingFiles = [] }) {
+function UploadModal({ show, basePath, onClose, onComplete, onUpload }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [subFolder, setSubFolder] = useState('');
   const [storageClass, setStorageClass] = useState('STANDARD');
