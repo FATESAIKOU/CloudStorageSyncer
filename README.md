@@ -41,6 +41,12 @@ uv run cloud-storage-syncer download file folder/ --output-path ./downloaded-fol
 # Delete file/directory
 uv run cloud-storage-syncer delete file folder/myfile.txt
 uv run cloud-storage-syncer delete file folder/
+
+# Web interface
+uv run uvicorn src.cloud_storage_syncer.web_api:app --reload --port 8000 --host 0.0.0.0 &; (cd src/web-ui && npm run dev &)
+
+# Stop Web interface
+kill -9 $(ps aux | grep -E '[m]ultiprocessing.spawn|[b]in/uvicorn|[v]ite' | awk '{ print $2 }')
 ```
 
 ## 🛠️ Installation & Setup
