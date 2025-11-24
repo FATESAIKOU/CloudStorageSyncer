@@ -11,19 +11,6 @@ export const STORAGE_CLASSES = [
   { value: 'DEEP_ARCHIVE', label: 'Glacier Deep Archive' },
 ];
 
-// 錯誤代碼對應的錯誤訊息
-export const ERROR_MESSAGES = {
-  'AUTH_001': '需要認證',
-  'AUTH_002': '認證失敗，請檢查帳號密碼',
-  'FILE_001': '檔案不存在',
-  'FILE_002': '檔案上傳失敗',
-  'FILE_003': '檔案下載失敗',
-  'FILE_004': '檔案刪除失敗',
-  'S3_001': 'S3 連線錯誤',
-  'REQ_001': '請求格式錯誤',
-  'SRV_001': '伺服器錯誤',
-};
-
 // 檔案大小格式化
 export function formatFileSize(bytes) {
   if (bytes === 0) return '0 Bytes';
@@ -73,7 +60,6 @@ export function getFileIcon(filename) {
 
 export default {
   STORAGE_CLASSES,
-  ERROR_MESSAGES,
   formatFileSize,
   formatDate,
   getFileIcon,

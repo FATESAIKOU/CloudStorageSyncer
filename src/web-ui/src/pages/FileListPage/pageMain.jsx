@@ -185,7 +185,6 @@ function FileListPage({ authData, onLogout, onAuthError }) {
             onDelete={handleDeleteClick}
             onUpload={handleUpload}
             onUploadComplete={handleUploadModalComplete}
-            onNavigate={handleNavigate}
             currentPath={currentPath}
           />
         )}

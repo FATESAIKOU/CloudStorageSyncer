@@ -65,13 +65,6 @@ class ApiResponse(BaseModel):
 
 
 # File operation request/response models
-class FileListRequest(BaseModel):
-    """Request model for file listing."""
-
-    prefix: str = ""
-    max_keys: int = 100
-
-
 class FileUploadResponse(BaseModel):
     """Response model for file upload."""
 
@@ -88,32 +81,8 @@ class FileListResponse(BaseModel):
     prefix: str
 
 
-class FileDownloadResponse(BaseModel):
-    """Response model for file download info."""
-
-    s3_key: str
-    size: int
-    last_modified: str
-    download_url: str
-
-
 class FileDeleteResponse(BaseModel):
     """Response model for file deletion."""
 
     s3_key: str
     deleted: bool
-
-
-class FileSearchRequest(BaseModel):
-    """Request model for file search."""
-
-    pattern: str
-    prefix: str = ""
-
-
-class FileSearchResponse(BaseModel):
-    """Response model for file search."""
-
-    files: list[dict]
-    total_count: int
-    search_pattern: str
