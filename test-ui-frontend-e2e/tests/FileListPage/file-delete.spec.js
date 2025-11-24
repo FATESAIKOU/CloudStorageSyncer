@@ -14,13 +14,13 @@ test.describe('FileOperations - File Delete', () => {
     // 等待檔案列表載入
     await expect(page.locator('.file-list')).toBeVisible();
 
-    // 找到第一個檔案項目
-    const firstFile = page.locator('.file-item.file').first();
+    // 找到第一個檔案節點 (TreeNode with file class)
+    const firstFile = page.locator('.tree-node.file').first();
 
     // 懸停以顯示操作按鈕
     await firstFile.hover();
 
-    // 點擊刪除按鈕
+    // 點擊刪除按鈕 (TreeNode actions)
     await firstFile.locator('.action-button.delete').click();
 
     // 確認刪除確認對話框出現
@@ -36,7 +36,7 @@ test.describe('FileOperations - File Delete', () => {
 
   test('should cancel delete operation', async ({ page }) => {
     // 觸發刪除確認對話框
-    const firstFile = page.locator('.file-item.file').first();
+    const firstFile = page.locator('.tree-node.file').first();
     await firstFile.hover();
     await firstFile.locator('.action-button.delete').click();
 
@@ -50,7 +50,7 @@ test.describe('FileOperations - File Delete', () => {
     await expect(page.locator('.modal-overlay')).not.toBeVisible();
 
     // 確認檔案仍在列表中
-    await expect(page.locator('.file-item.file')).toHaveCount(2);
+    await expect(page.locator('.tree-node.file')).toHaveCount(2);
   });
 
   test('should delete file successfully', async ({ page }) => {
@@ -119,7 +119,7 @@ test.describe('FileOperations - File Delete', () => {
     });
 
     // 觸發刪除確認對話框
-    const firstFile = page.locator('.file-item.file').first();
+    const firstFile = page.locator('.tree-node.file').first();
     await firstFile.hover();
     await firstFile.locator('.action-button.delete').click();
 
@@ -157,7 +157,7 @@ test.describe('FileOperations - File Delete', () => {
       }
     });
 
-    const firstFile = page.locator('.file-item.file').first();
+    const firstFile = page.locator('.tree-node.file').first();
     await firstFile.hover();
     await firstFile.locator('.action-button.delete').click();
 
@@ -171,7 +171,7 @@ test.describe('FileOperations - File Delete', () => {
 
   test('should close modal by clicking overlay', async ({ page }) => {
     // 觸發刪除確認對話框
-    const firstFile = page.locator('.file-item.file').first();
+    const firstFile = page.locator('.tree-node.file').first();
     await firstFile.hover();
     await firstFile.locator('.action-button.delete').click();
 

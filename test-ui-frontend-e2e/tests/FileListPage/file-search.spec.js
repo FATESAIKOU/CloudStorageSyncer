@@ -23,10 +23,10 @@ test.describe('FileListPage - File Search', () => {
     // 等待搜尋結果載入
     await expect(page.locator('.file-list')).toBeVisible();
 
-    // 確認搜尋結果
-    const fileItems = page.locator('.file-item.file');
-    await expect(fileItems).toHaveCount(1);
-    await expect(fileItems.first().locator('.file-name')).toHaveText('example.txt');
+    // 確認搜尋結果 (TreeNode structure)
+    const fileNodes = page.locator('.tree-node.file');
+    await expect(fileNodes).toHaveCount(1);
+    await expect(fileNodes.first().locator('.tree-node-name')).toHaveText('example.txt');
   });
 
   test('should clear search and return to full list', async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe('FileListPage - File Search', () => {
     await page.click('.search-button');
 
     // 確認搜尋結果只有一個檔案
-    await expect(page.locator('.file-item.file')).toHaveCount(1);
+    await expect(page.locator('.tree-node.file')).toHaveCount(1);
 
     // 點擊清除按鈕
     await page.click('.search-clear');
@@ -43,7 +43,7 @@ test.describe('FileListPage - File Search', () => {
     // 確認搜尋欄已清空
     await expect(page.locator('.search-input')).toHaveValue('');
 
-    // 確認回到完整檔案列表（這需要重新觸發 files-list API）
+    // 確認回到完整檔案列表
     await expect(page.locator('.file-count')).toContainText('共 1 個資料夾，2 個檔案');
   });
 
@@ -64,9 +64,9 @@ test.describe('FileListPage - File Search', () => {
     // 按 Enter 鍵
     await page.press('.search-input', 'Enter');
 
-    // 確認搜尋結果
-    const fileItems = page.locator('.file-item.file');
-    await expect(fileItems).toHaveCount(1);
-    await expect(fileItems.first().locator('.file-name')).toHaveText('image.jpg');
+    // 確認搜尋結果 (TreeNode structure)
+    const fileNodes = page.locator('.tree-node.file');
+    await expect(fileNodes).toHaveCount(1);
+    await expect(fileNodes.first().locator('.tree-node-name')).toHaveText('image.jpg');
   });
 });
