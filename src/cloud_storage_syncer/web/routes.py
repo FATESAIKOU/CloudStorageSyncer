@@ -217,7 +217,7 @@ async def search_files(
 
         # Filter by pattern (simple substring search)
         matching_files = [
-            obj for obj in all_objects if pattern.lower() in obj.get("Key", "").lower()
+            obj for obj in all_objects if pattern.lower() in obj.get("key", "").lower()
         ]
 
         return ApiResponse.success_response(
