@@ -1,7 +1,87 @@
+import { useState, useEffect, useMemo } from 'react';
 import './FileList.css';
-import FileItem from './FileItem';
+import TreeNode from './TreeNode';
+import { buildFileTree, getAllPaths } from '../../utils/fileTree';
 
 function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
+  const [expandedPaths, setExpandedPaths] = useState(new Set());
+
+  // 構建樹狀結構
+  const fileTree = useMemo(() => {
+    if (!files || files.length === 0) return null;
+
+    // 轉換 S3 API 格式為統一格式
+    const normalizedFiles = files.map(file => ({
+      Key: file.Key || file.key,
+      Size: file.Size || file.size,
+      LastModified: file.LastModified || file.last_modified,
+      StorageClass: file.StorageClass || file.storage_class,
+    }));
+
+    return buildFileTree(normalizedFiles, currentPath);
+  }, [files, currentPath]);
+
+  // 計算統計資訊
+  const stats = useMemo(() => {
+    if (!fileTree || !fileTree.children) {
+      return { directories: 0, files: 0 };
+    }
+
+    let directories = 0;
+    let filesCount = 0;
+
+    function countNodes(node) {
+      if (node.isDirectory) {
+        directories++;
+        if (node.children) {
+          node.children.forEach(child => countNodes(child));
+        }
+      } else {
+        filesCount++;
+      }
+    }
+
+    fileTree.children.forEach(child => countNodes(child));
+
+    return { directories, files: filesCount };
+  }, [fileTree]);
+
+  // 當檔案列表改變時，預設展開第一層
+  useEffect(() => {
+    if (fileTree && fileTree.children) {
+      const firstLevelPaths = new Set();
+      fileTree.children.forEach(child => {
+        if (child.isDirectory) {
+          firstLevelPaths.add(child.path);
+        }
+      });
+      setExpandedPaths(firstLevelPaths);
+    }
+  }, [fileTree]);
+
+  const handleToggle = (path) => {
+    setExpandedPaths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(path)) {
+        newSet.delete(path);
+      } else {
+        newSet.add(path);
+      }
+      return newSet;
+    });
+  };
+
+  const handleExpandAll = () => {
+    if (fileTree) {
+      const allPaths = getAllPaths(fileTree);
+      setExpandedPaths(allPaths);
+    }
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedPaths(new Set());
+  };
+
   if (!files || files.length === 0) {
     return (
       <div className="file-list-empty">
@@ -11,40 +91,39 @@ function FileList({ files, onDownload, onDelete, onNavigate, currentPath }) {
     );
   }
 
-  // 分離目錄和檔案
-  const directories = files.filter(file => file.key.endsWith('/'));
-  const regularFiles = files.filter(file => !file.key.endsWith('/'));
+  if (!fileTree) {
+    return (
+      <div className="file-list-empty">
+        <div className="empty-icon">⚠️</div>
+        <div className="empty-text">無法載入檔案列表</div>
+      </div>
+    );
+  }
 
   return (
     <div className="file-list">
       <div className="file-list-header">
         <span className="file-count">
-          共 {directories.length} 個資料夾，{regularFiles.length} 個檔案
+          共 {stats.directories} 個資料夾，{stats.files} 個檔案
         </span>
+        <div className="file-list-actions">
+          <button className="expand-button" onClick={handleExpandAll}>
+            展開全部
+          </button>
+          <button className="expand-button" onClick={handleCollapseAll}>
+            收合全部
+          </button>
+        </div>
       </div>
 
       <div className="file-list-content">
-        {/* 目錄列表 */}
-        {directories.map((directory, index) => (
-          <FileItem
-            key={`dir-${index}`}
-            file={directory}
-            onDownload={onDownload}
-            onDelete={onDelete}
-            onNavigate={onNavigate}
-          />
-        ))}
-
-        {/* 檔案列表 */}
-        {regularFiles.map((file, index) => (
-          <FileItem
-            key={`file-${index}`}
-            file={file}
-            onDownload={onDownload}
-            onDelete={onDelete}
-            onNavigate={onNavigate}
-          />
-        ))}
+        <TreeNode
+          node={fileTree}
+          onDownload={onDownload}
+          onDelete={onDelete}
+          expandedPaths={expandedPaths}
+          onToggle={handleToggle}
+        />
       </div>
     </div>
   );
