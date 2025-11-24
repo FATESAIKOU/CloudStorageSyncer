@@ -1,0 +1,64 @@
+.file-list {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.file-list-header {
+  padding: 16px 20px;
+  border-bottom: 2px solid #e5e7eb;
+  background-color: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-count {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.file-list-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.expand-button {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #4b5563;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.expand-button:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.file-list-content {
+  padding: 0;
+}
+
+.file-list-empty {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.empty-text {
+  color: #666;
+  font-size: 16px;
+}

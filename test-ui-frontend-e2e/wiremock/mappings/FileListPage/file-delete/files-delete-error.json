@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "DELETE",
+    "urlPathPattern": "/files/error-file\\.txt",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
+      }
+    }
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    },
+    "jsonBody": {
+      "success": false,
+      "data": null,
+      "message": "刪除失敗，請稍後重試",
+      "error": "Internal server error",
+      "error_code": "FILE_003"
+    }
+  }
+}

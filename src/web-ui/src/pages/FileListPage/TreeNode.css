@@ -1,0 +1,149 @@
+.tree-root {
+  width: 100%;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  min-height: 48px;
+}
+
+.tree-node:hover {
+  background-color: #f9fafb;
+}
+
+.tree-node.directory {
+  font-weight: 500;
+}
+
+.tree-node-toggle {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.toggle-icon {
+  font-size: 12px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  display: inline-block;
+  user-select: none;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.toggle-icon.collapsed {
+  transform: rotate(0deg);
+}
+
+.toggle-icon-placeholder {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+}
+
+.tree-node-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.tree-node-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tree-node-name {
+  font-size: 14px;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-node.directory .tree-node-name {
+  color: #2563eb;
+}
+
+.tree-node-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tree-node-meta span {
+  white-space: nowrap;
+}
+
+.tree-node-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.tree-node-actions .action-button {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-node-actions .action-button:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.tree-node-actions .action-button.delete:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.tree-node-actions .action-button.upload:hover {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.tree-node-children {
+  width: 100%;
+}
+
+/* 深度層級的視覺化輔助線（可選） */
+.tree-node::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background-color: transparent;
+}
+
+.tree-node.directory::before {
+  background-color: #e5e7eb;
+}

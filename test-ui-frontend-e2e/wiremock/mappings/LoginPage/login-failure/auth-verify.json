@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/auth/verify",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Basic YWRtaW46d3JvbmdwYXNzd29yZA=="
+      }
+    }
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization"
+    },
+    "jsonBody": {
+      "success": false,
+      "data": null,
+      "message": "認證失敗，請檢查帳號密碼",
+      "error": "Invalid credentials",
+      "error_code": "AUTH_002"
+    }
+  }
+}
