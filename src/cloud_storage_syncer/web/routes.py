@@ -4,6 +4,7 @@
 import io
 import os
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -58,9 +59,7 @@ async def list_files(
         objects = s3_service.list_objects(prefix=prefix, max_keys=max_keys)
 
         return ApiResponse.success_response(
-            data=FileListResponse(
-                files=objects, total_count=len(objects), prefix=prefix
-            ).dict(),
+            data=FileListResponse(files=objects, total_count=len(objects), prefix=prefix).dict(),
             message=f"Found {len(objects)} files",
         )
 
@@ -170,15 +169,15 @@ async def download_file(request: Request, s3_key: str):
                 with open(temp_path, "rb") as f:
                     file_content = f.read()
 
+                # Handle filename encoding for non-ASCII characters
+                filename = s3_key.split("/")[-1]
+                encoded_filename = quote(filename)
+
                 # Create streaming response
                 return StreamingResponse(
                     io.BytesIO(file_content),
                     media_type="application/octet-stream",
-                    headers={
-                        "Content-Disposition": (
-                            f"attachment; filename={s3_key.split('/')[-1]}"
-                        )
-                    },
+                    headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
                 )
             else:
                 raise HTTPException(
@@ -219,9 +218,7 @@ async def search_files(
         all_objects = s3_service.list_objects(prefix=prefix, max_keys=1000)
 
         # Filter by pattern (simple substring search)
-        matching_files = [
-            obj for obj in all_objects if pattern.lower() in obj.get("key", "").lower()
-        ]
+        matching_files = [obj for obj in all_objects if pattern.lower() in obj.get("key", "").lower()]
 
         return ApiResponse.success_response(
             data={
