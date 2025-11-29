@@ -98,7 +98,7 @@ test.describe('FileOperations - File Delete', () => {
       }
     });
 
-    await page.route('**/files/example.txt', (route) => {
+    await page.route('**/delete-file?s3_key=example.txt', (route) => {
       if (route.request().method() === 'DELETE') {
         deleteCompleted = true;
         route.fulfill({
@@ -138,7 +138,7 @@ test.describe('FileOperations - File Delete', () => {
 
   test('should handle delete error', async ({ page }) => {
     // 模擬刪除失敗的情況
-    await page.route('**/files/example.txt', (route) => {
+    await page.route('**/delete-file?s3_key=example.txt', (route) => {
       if (route.request().method() === 'DELETE') {
         route.fulfill({
           status: 500,
