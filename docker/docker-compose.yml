@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     container_name: cloudsyncer-backend
     expose:
       - "8000"
@@ -18,12 +18,15 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     container_name: cloudsyncer-frontend
     ports:
       - "443:443"
       - "80:80"
+    environment:
+      - BACKEND_HOST=${BACKEND_HOST:-backend}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
     depends_on:
       - backend
     networks:
