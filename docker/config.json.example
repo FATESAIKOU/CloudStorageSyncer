@@ -1,0 +1,6 @@
+{
+  "access_key": "YOUR_AWS_ACCESS_KEY",
+  "secret_key": "YOUR_AWS_SECRET_KEY",
+  "bucket": "YOUR_S3_BUCKET_NAME",
+  "region": "us-west-2"
+}

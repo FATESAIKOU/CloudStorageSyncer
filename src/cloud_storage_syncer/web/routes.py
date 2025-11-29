@@ -2,6 +2,8 @@
 # ruff: noqa: B008
 
 import io
+import os
+from pathlib import Path
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -25,7 +27,8 @@ router = APIRouter(prefix="/files", tags=["files"])
 
 def get_s3_service() -> S3Service:
     """Get configured S3 service instance."""
-    config_service = ConfigService()
+    config_path = os.getenv("CONFIG_PATH")
+    config_service = ConfigService(Path(config_path) if config_path else None)
     config = config_service.load_config()
 
     if not config or not config.is_valid():

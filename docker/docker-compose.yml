@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: cloudsyncer-backend
+    expose:
+      - "8000"
+    volumes:
+      - ./config.json:/config/config.json:ro
+    environment:
+      - CONFIG_PATH=/config/config.json
+      - WEB_USERNAME=${WEB_USERNAME:-admin}
+      - WEB_PASSWORD=${WEB_PASSWORD:-cloudsyncer2025}
+    networks:
+      - cloudsyncer-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: cloudsyncer-frontend
+    ports:
+      - "443:443"
+      - "80:80"
+    environment:
+      - BACKEND_HOST=${BACKEND_HOST:-backend}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
+    depends_on:
+      - backend
+    networks:
+      - cloudsyncer-network
+    restart: unless-stopped
+
+networks:
+  cloudsyncer-network:
+    driver: bridge
