@@ -1,0 +1,80 @@
+.file-list-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-path-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.current-path-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a73e8;
+  padding: 4px 12px;
+  background: #e8f0fe;
+  border-radius: 4px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.toolbar-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  background: #1a73e8;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-upload-btn:hover {
+  background: #1557b0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(26, 115, 232, 0.3);
+}
+
+.toolbar-upload-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(26, 115, 232, 0.2);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .file-list-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .toolbar-actions {
+    width: 100%;
+  }
+
+  .toolbar-upload-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

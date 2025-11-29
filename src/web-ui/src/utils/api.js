@@ -147,7 +147,20 @@ export const fileAPI = {
   },
 
   delete: async (authHeader, s3Key) => {
-    return apiRequest(`/files/${encodeURIComponent(s3Key)}`, {
+    const params = new URLSearchParams();
+    params.append('s3_key', s3Key);
+    return apiRequest(`/files/delete-file?${params.toString()}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': authHeader,
+      },
+    });
+  },
+
+  deleteDirectory: async (authHeader, prefix) => {
+    const params = new URLSearchParams();
+    params.append('prefix', prefix);
+    return apiRequest(`/files/delete-directory?${params.toString()}`, {
       method: 'DELETE',
       headers: {
         'Authorization': authHeader,

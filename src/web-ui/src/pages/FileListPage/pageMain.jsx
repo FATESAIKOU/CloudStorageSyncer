@@ -3,7 +3,9 @@ import './pageMain.css';
 import Header from './Header';
 import FileList from './FileList';
 import SearchBar from './SearchBar';
+import FileListToolbar from './FileListToolbar';
 import DeleteConfirmModal from './DeleteConfirmModal';
+import UploadModal from './UploadModal';
 import ErrorMessage from '../../shared/components/ErrorMessage';
 import LoadingSpinner from '../../shared/components/LoadingSpinner';
 import { fileAPI } from '../../utils/api';
@@ -14,6 +16,7 @@ function FileListPage({ authData, onLogout, onAuthError }) {
   const [error, setError] = useState('');
   const [currentPath, setCurrentPath] = useState('');
   const [deleteModal, setDeleteModal] = useState({ show: false, file: null });
+  const [toolbarUploadModal, setToolbarUploadModal] = useState({ show: false });
 
   // 載入檔案列表
   const loadFiles = async (prefix = '') => {
@@ -129,7 +132,16 @@ function FileListPage({ authData, onLogout, onAuthError }) {
     setDeleteModal({ show: false, file: null });
 
     try {
-      const response = await fileAPI.delete(authData.authHeader, file.key);
+      let response;
+
+      // 判斷是資料夾還是檔案：key 以 '/' 結尾就是資料夾
+      if (file.key.endsWith('/')) {
+        // 刪除資料夾（遞迴）
+        response = await fileAPI.deleteDirectory(authData.authHeader, file.key);
+      } else {
+        // 刪除單一檔案
+        response = await fileAPI.delete(authData.authHeader, file.key);
+      }
 
       if (response.success) {
         // 重新載入檔案列表並關閉刪除確認框
@@ -150,6 +162,20 @@ function FileListPage({ authData, onLogout, onAuthError }) {
   // 目錄導航
   const handleNavigate = (path) => {
     loadFiles(path);
+  };
+
+  // 工具列上傳按鈕
+  const handleToolbarUploadClick = () => {
+    setToolbarUploadModal({ show: true });
+  };
+
+  const handleCloseToolbarUploadModal = () => {
+    setToolbarUploadModal({ show: false });
+  };
+
+  const handleToolbarUploadComplete = async () => {
+    handleCloseToolbarUploadModal();
+    await loadFiles(currentPath);
   };
 
   // 初始載入
@@ -176,6 +202,12 @@ function FileListPage({ authData, onLogout, onAuthError }) {
           />
         )}
 
+        {/* 工具列 - 提供根目錄上傳功能 */}
+        <FileListToolbar
+          currentPath={currentPath}
+          onUploadClick={handleToolbarUploadClick}
+        />
+
         {loading ? (
           <LoadingSpinner message="載入檔案列表..." />
         ) : (
@@ -189,6 +221,17 @@ function FileListPage({ authData, onLogout, onAuthError }) {
           />
         )}
       </main>
+
+      {/* 工具列的上傳 Modal */}
+      {toolbarUploadModal.show && (
+        <UploadModal
+          show={toolbarUploadModal.show}
+          basePath={currentPath}
+          onClose={handleCloseToolbarUploadModal}
+          onComplete={handleToolbarUploadComplete}
+          onUpload={handleUpload}
+        />
+      )}
 
       {deleteModal.show && (
         <DeleteConfirmModal
