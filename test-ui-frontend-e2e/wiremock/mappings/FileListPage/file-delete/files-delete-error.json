@@ -1,7 +1,12 @@
 {
   "request": {
     "method": "DELETE",
-    "urlPathPattern": "/files/error-file\\.txt",
+    "urlPath": "/delete-file",
+    "queryParameters": {
+      "s3_key": {
+        "equalTo": "error-file.txt"
+      }
+    },
     "headers": {
       "Authorization": {
         "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"

@@ -4,7 +4,12 @@
   "newScenarioState": "FileDeleted",
   "request": {
     "method": "DELETE",
-    "urlPathPattern": "/files/example\\.txt",
+    "urlPath": "/delete-file",
+    "queryParameters": {
+      "s3_key": {
+        "equalTo": "example.txt"
+      }
+    },
     "headers": {
       "Authorization": {
         "equalTo": "Basic YWRtaW46Y2xvdWRzeW5jZXIyMDI1"
