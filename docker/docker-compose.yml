@@ -27,6 +27,7 @@ services:
     environment:
       - BACKEND_HOST=${BACKEND_HOST:-backend}
       - BACKEND_PORT=${BACKEND_PORT:-8000}
+      - MAX_UPLOAD_SIZE=${MAX_UPLOAD_SIZE:-500M}
     depends_on:
       - backend
     networks:
