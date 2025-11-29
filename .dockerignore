@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+docs/
+*.md
+!README.md
+.prompt/
+
+# Tests
+tests/
+test-*/
+
+# Frontend
+src/web-ui/node_modules/
+src/web-ui/dist/
+
+# Data and config
+data/
+config.json
+
+# CI/CD
+.pre-commit-config.yaml

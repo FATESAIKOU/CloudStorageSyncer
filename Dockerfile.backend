@@ -1,0 +1,27 @@
+# Backend Dockerfile for CloudStorageSyncer
+FROM python:3.13-slim
+
+# 設定工作目錄
+WORKDIR /app
+
+# 安裝 uv
+RUN pip install --no-cache-dir uv
+
+# 複製依賴定義檔案和源代碼（uv build 需要）
+COPY pyproject.toml ./
+COPY uv.lock ./
+COPY README.md ./
+COPY src/cloud_storage_syncer ./src/cloud_storage_syncer/
+
+# 安裝依賴
+RUN uv sync --frozen --no-dev
+
+# 設定環境變數
+ENV PYTHONUNBUFFERED=1
+ENV CONFIG_PATH=/config/config.json
+
+# 暴露端口
+EXPOSE 8000
+
+# 啟動命令
+CMD ["uv", "run", "uvicorn", "src.cloud_storage_syncer.web_api:app", "--host", "0.0.0.0", "--port", "8000"]
