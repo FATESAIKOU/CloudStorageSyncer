@@ -129,7 +129,16 @@ function FileListPage({ authData, onLogout, onAuthError }) {
     setDeleteModal({ show: false, file: null });
 
     try {
-      const response = await fileAPI.delete(authData.authHeader, file.key);
+      let response;
+
+      // 判斷是資料夾還是檔案：key 以 '/' 結尾就是資料夾
+      if (file.key.endsWith('/')) {
+        // 刪除資料夾（遞迴）
+        response = await fileAPI.deleteDirectory(authData.authHeader, file.key);
+      } else {
+        // 刪除單一檔案
+        response = await fileAPI.delete(authData.authHeader, file.key);
+      }
 
       if (response.success) {
         // 重新載入檔案列表並關閉刪除確認框

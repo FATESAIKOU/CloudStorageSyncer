@@ -237,8 +237,11 @@ async def search_files(
         )
 
 
-@router.delete("/{s3_key:path}")
-async def delete_file(request: Request, s3_key: str):
+@router.delete("/delete-file")
+async def delete_file(
+    request: Request,
+    s3_key: str = Query(..., description="S3 key of the file to delete"),
+):
     """Delete file from S3 bucket."""
     require_auth(request)
 
@@ -276,4 +279,67 @@ async def delete_file(request: Request, s3_key: str):
             error=str(e),
             error_code=ApiErrorCode.DELETE_FAILED,
             message="Failed to delete file",
+        )
+
+
+@router.delete("/delete-directory")
+async def delete_directory(
+    request: Request,
+    prefix: str = Query(..., description="Directory prefix to delete recursively"),
+    force: bool = Query(False, description="Force deletion without additional checks"),
+):
+    """Delete directory and all files under it recursively."""
+    require_auth(request)
+
+    # Validate prefix is not empty
+    if not prefix or prefix.strip() == "":
+        raise HTTPException(
+            status_code=422,
+            detail=ApiResponse.error_response(
+                error="Directory prefix cannot be empty",
+                error_code=ApiErrorCode.DELETE_FAILED,
+                message="Invalid directory prefix provided",
+            ).dict(),
+        )
+
+    try:
+        s3_service = get_s3_service()
+
+        # Delete directory recursively
+        results = s3_service.delete_directory(prefix, force)
+
+        # Count successes and failures
+        successful = sum(1 for r in results if r.success)
+        failed = sum(1 for r in results if not r.success)
+
+        if failed == 0:
+            return ApiResponse.success_response(
+                data={
+                    "prefix": prefix,
+                    "deleted_count": successful,
+                    "failed_count": failed,
+                },
+                message=f"Directory deleted successfully ({successful} files)",
+            )
+        else:
+            # Partial success - some files failed to delete
+            failed_keys = [r.s3_key for r in results if not r.success]
+            return ApiResponse.error_response(
+                error=f"Failed to delete {failed} out of {len(results)} files",
+                error_code=ApiErrorCode.DELETE_FAILED,
+                message=f"Directory partially deleted ( \
+                    {successful} succeeded, {failed} failed)",
+                data={
+                    "prefix": prefix,
+                    "deleted_count": successful,
+                    "failed_count": failed,
+                    "failed_keys": failed_keys[:10],  # Limit to first 10 failures
+                },
+            )
+
+    except Exception as e:
+        return ApiResponse.error_response(
+            error=str(e),
+            error_code=ApiErrorCode.DELETE_FAILED,
+            message="Failed to delete directory",
         )
