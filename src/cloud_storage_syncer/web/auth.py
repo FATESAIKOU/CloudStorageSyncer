@@ -1,21 +1,29 @@
 """Authentication middleware and models for web API."""
 
 import base64
+import os
 
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 
 class AuthConfig:
-    """Authentication configuration with hardcoded credentials."""
+    """Authentication configuration from environment variables."""
 
-    HARDCODED_USERNAME = "admin"
-    HARDCODED_PASSWORD = "cloudsyncer2025"
+    @classmethod
+    def get_username(cls) -> str:
+        """Get username from environment variable or use default."""
+        return os.getenv("WEB_USERNAME", "admin")
+
+    @classmethod
+    def get_password(cls) -> str:
+        """Get password from environment variable or use default."""
+        return os.getenv("WEB_PASSWORD", "cloudsyncer2025")
 
     @classmethod
     def validate_credentials(cls, username: str, password: str) -> bool:
-        """Validate provided credentials against hardcoded values."""
-        return username == cls.HARDCODED_USERNAME and password == cls.HARDCODED_PASSWORD
+        """Validate provided credentials against configured values."""
+        return username == cls.get_username() and password == cls.get_password()
 
 
 class AuthService:

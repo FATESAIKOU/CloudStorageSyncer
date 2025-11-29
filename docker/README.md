@@ -12,6 +12,7 @@ docker/
 ├── nginx.conf                  # Nginx 配置模板（SSL + 反向代理）
 ├── nginx-entrypoint.sh         # Nginx 啟動腳本（處理環境變數）
 ├── config.json.example         # S3 配置範例
+├── .env.example                # 環境變數範例
 └── README.md                   # 本檔案
 ```
 
@@ -80,10 +81,12 @@ docker-compose restart
 
 ## 環境變數設定
 
+**重要**: 修改環境變數後需要重新啟動容器才會生效。
+
 可以透過環境變數或 `.env` 檔案自訂設定：
 
 ```bash
-# 登入帳號密碼
+# 登入帳號密碼（強烈建議修改）
 WEB_USERNAME=admin
 WEB_PASSWORD=cloudsyncer2025
 
@@ -92,18 +95,29 @@ BACKEND_HOST=backend
 BACKEND_PORT=8000
 ```
 
-使用方式：
-```bash
-# 方式 1: 環境變數
-export WEB_USERNAME=myuser
-export WEB_PASSWORD=mypassword
-docker-compose up -d
+### 使用方式
 
-# 方式 2: .env 檔案
-echo "WEB_USERNAME=myuser" > .env
-echo "WEB_PASSWORD=mypassword" >> .env
+**方式 1: 命令行環境變數**
+```bash
+WEB_USERNAME=myuser WEB_PASSWORD=mypassword docker-compose up -d
+```
+
+**方式 2: .env 檔案（推薦）**
+```bash
+# 複製範例檔案
+cp .env.example .env
+
+# 編輯 .env 填入你的帳號密碼
+# WEB_USERNAME=myuser
+# WEB_PASSWORD=mypassword
+
+# 啟動服務
 docker-compose up -d
 ```
+
+**注意**:
+- 修改環境變數後必須執行 `docker-compose restart` 或 `docker-compose up -d` 重啟容器
+- `.env` 檔案已加入 `.gitignore`，不會被提交到 Git
 
 ## 架構說明
 
