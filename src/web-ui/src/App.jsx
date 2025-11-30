@@ -50,7 +50,10 @@ function App() {
 
   // 已認證，顯示檔案列表頁面
   return (
-    <UploadQueueProvider authHeader={authData.authHeader} uploadAPI={handleUploadAPI}>
+    <UploadQueueProvider
+      authHeader={authData.authHeader}
+      uploadAPI={handleUploadAPI}
+    >
       <FileListPage
         authData={authData}
         onLogout={handleLogout}
