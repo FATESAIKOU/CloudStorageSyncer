@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './TreeNode.css';
 import { formatFileSize, formatDate, getFileIcon } from '../../utils/constants';
+import { formatSpeed } from '../../utils/formatSpeed';
 
 function TreeNode({ node, depth = 0, onDownload, onDelete, onUpload, expandedPaths, onToggle }) {
   const isExpanded = expandedPaths.has(node.path);
@@ -90,53 +91,73 @@ function TreeNode({ node, depth = 0, onDownload, onDelete, onUpload, expandedPat
             {node.name}
           </div>
 
-          {!node.isDirectory && (
-            <div className="tree-node-meta">
-              <span className="file-size">
-                {formatFileSize(node.size)}
+          {node.isUploading ? (
+            // 上傳中顯示進度
+            <div className="tree-node-uploading">
+              <div className="upload-progress-bar">
+                <div
+                  className="upload-progress-fill"
+                  style={{ width: `${node.uploadTask.progress}%` }}
+                />
+              </div>
+              <span className="upload-progress-text">
+                {node.uploadTask.progress}%
               </span>
-              <span className="file-date">
-                {formatDate(node.lastModified)}
+              <span className="upload-speed">
+                {formatSpeed(node.uploadTask.speed)}
               </span>
-              {node.storageClass && (
-                <span className="file-storage">
-                  {node.storageClass}
-                </span>
-              )}
             </div>
+          ) : (
+            !node.isDirectory && (
+              <div className="tree-node-meta">
+                <span className="file-size">
+                  {formatFileSize(node.size)}
+                </span>
+                <span className="file-date">
+                  {formatDate(node.lastModified)}
+                </span>
+                {node.storageClass && (
+                  <span className="file-storage">
+                    {node.storageClass}
+                  </span>
+                )}
+              </div>
+            )
           )}
         </div>
 
         {/* 操作按鈕 */}
-        <div className="tree-node-actions">
-          {node.isDirectory && (
-            <button
-              className="action-button upload"
-              onClick={handleUpload}
-              title="上傳檔案"
-            >
-              📤
-            </button>
-          )}
+        {!node.isUploading && (
+          <div className="tree-node-actions">
+            {node.isDirectory && (
+              <button
+                className="action-button upload"
+                onClick={handleUpload}
+                title="上傳檔案"
+              >
+                📤
+              </button>
+            )}
 
-          {!node.isDirectory && (
-            <button
-              className="action-button download"
-              onClick={handleDownload}
-              title="下載"
-            >
-              📥
-            </button>
-          )}
+            {!node.isDirectory && (
+              <button
+                className="action-button download"
+                onClick={handleDownload}
+                title="下載"
+              >
+                📥
+              </button>
+            )}
 
-          <button
-            className="action-button delete"
-            onClick={handleDelete}
-            title="刪除"
-          >
-            🗑️
-          </button>
-        </div>
+            <button
+              className="action-button delete"
+              onClick={handleDelete}
+              title="刪除"
+            >
+              🗑️
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 子節點 */}

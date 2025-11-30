@@ -3,10 +3,99 @@ import './FileList.css';
 import TreeNode from './TreeNode';
 import UploadModal from './UploadModal';
 import { buildFileTree, getAllPaths } from '../../utils/fileTree';
+import { useUploadQueue } from '../../contexts/UploadQueueContext';
 
 function FileList({ files, onDownload, onDelete, currentPath }) {
   const [expandedPaths, setExpandedPaths] = useState(new Set());
   const [uploadModal, setUploadModal] = useState({ show: false, targetPath: '' });
+  const { uploadQueue } = useUploadQueue();
+
+  // 輔助函數：根據路徑找到節點
+  const findNodeByPath = (node, targetPath) => {
+    if (node.path === targetPath) return node;
+
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNodeByPath(child, targetPath);
+        if (found) return found;
+      }
+    }
+
+    return null;
+  };
+
+  // 輔助函數：深拷貝樹結構
+  const deepCloneTree = (node) => {
+    const cloned = { ...node };
+    if (node.children) {
+      cloned.children = node.children.map(child => deepCloneTree(child));
+    }
+    return cloned;
+  };
+
+  // 輔助函數：注入上傳中和已完成的節點
+  const injectUploadingNodes = (tree, uploadTasks) => {
+    if (!tree) return tree;
+
+    const clonedTree = deepCloneTree(tree);
+
+    uploadTasks.forEach(task => {
+      const { s3Key, file } = task;
+      const pathParts = s3Key.split('/').filter(p => p);
+      const fileName = pathParts[pathParts.length - 1];
+      const parentPath = pathParts.slice(0, -1).join('/') + (pathParts.length > 1 ? '/' : '');
+
+      // 找到父節點
+      const parentNode = findNodeByPath(clonedTree, parentPath);
+
+      if (parentNode && parentNode.children) {
+        // 檢查是否已存在（從 S3 API 返回的檔案）
+        const existingIndex = parentNode.children.findIndex(c => c.path === s3Key);
+
+        if (task.status === 'completed') {
+          // 上傳完成：替換或新增為正常節點
+          const completedNode = {
+            name: fileName,
+            path: s3Key,
+            fullPath: s3Key,
+            isDirectory: false,
+            size: file.size,
+            lastModified: new Date().toISOString(), // 使用當前 UTC 時間（ISO 8601 格式）
+            storageClass: task.storageClass || 'STANDARD',
+          };
+
+          if (existingIndex >= 0) {
+            // 替換現有節點
+            parentNode.children[existingIndex] = completedNode;
+          } else {
+            // 新增節點
+            parentNode.children.unshift(completedNode);
+          }
+        } else if (task.status === 'uploading' || task.status === 'pending') {
+          // 上傳中：顯示臨時上傳節點
+          if (existingIndex < 0) {
+            parentNode.children.unshift({
+              name: fileName,
+              path: s3Key,
+              fullPath: s3Key,
+              isDirectory: false,
+              isUploading: true,
+              uploadTask: {
+                id: task.id,
+                status: task.status,
+                progress: task.progress || 0,
+                speed: task.speed || 0,
+                uploadedBytes: task.uploadedBytes || 0,
+                totalBytes: task.totalBytes || file.size,
+              },
+            });
+          }
+        }
+      }
+    });
+
+    return clonedTree;
+  };
 
   // 構建樹狀結構
   const fileTree = useMemo(() => {
@@ -23,9 +112,23 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
     return buildFileTree(normalizedFiles, currentPath);
   }, [files, currentPath]);
 
+  // 合併檔案樹和上傳任務
+  const fileTreeWithUploads = useMemo(() => {
+    if (!fileTree) return null;
+
+    // 過濾出上傳中、待上傳、已完成的任務
+    const activeUploads = uploadQueue.filter(
+      t => t.status === 'pending' || t.status === 'uploading' || t.status === 'completed'
+    );
+
+    if (activeUploads.length === 0) return fileTree;
+
+    return injectUploadingNodes(fileTree, activeUploads);
+  }, [fileTree, uploadQueue]);
+
   // 計算統計資訊
   const stats = useMemo(() => {
-    if (!fileTree || !fileTree.children) {
+    if (!fileTreeWithUploads || !fileTreeWithUploads.children) {
       return { directories: 0, files: 0 };
     }
 
@@ -43,23 +146,23 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
       }
     }
 
-    fileTree.children.forEach(child => countNodes(child));
+    fileTreeWithUploads.children.forEach(child => countNodes(child));
 
     return { directories, files: filesCount };
-  }, [fileTree]);
+  }, [fileTreeWithUploads]);
 
   // 當檔案列表改變時，預設展開第一層
   useEffect(() => {
-    if (fileTree && fileTree.children) {
+    if (fileTreeWithUploads && fileTreeWithUploads.children) {
       const firstLevelPaths = new Set();
-      fileTree.children.forEach(child => {
+      fileTreeWithUploads.children.forEach(child => {
         if (child.isDirectory) {
           firstLevelPaths.add(child.path);
         }
       });
       setExpandedPaths(firstLevelPaths);
     }
-  }, [fileTree]);
+  }, [fileTreeWithUploads]);
 
   const handleToggle = (path) => {
     setExpandedPaths(prev => {
@@ -74,8 +177,8 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
   };
 
   const handleExpandAll = () => {
-    if (fileTree) {
-      const allPaths = getAllPaths(fileTree);
+    if (fileTreeWithUploads) {
+      const allPaths = getAllPaths(fileTreeWithUploads);
       setExpandedPaths(allPaths);
     }
   };
@@ -101,7 +204,7 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
     );
   }
 
-  if (!fileTree) {
+  if (!fileTreeWithUploads) {
     return (
       <div className="file-list-empty">
         <div className="empty-icon">⚠️</div>
@@ -128,7 +231,7 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
 
       <div className="file-list-content">
         <TreeNode
-          node={fileTree}
+          node={fileTreeWithUploads}
           onDownload={onDownload}
           onDelete={onDelete}
           onUpload={handleUploadClick}
