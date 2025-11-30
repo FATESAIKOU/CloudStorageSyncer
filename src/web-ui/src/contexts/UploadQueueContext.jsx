@@ -13,6 +13,12 @@ export function useUploadQueue() {
 export function UploadQueueProvider({ children, authHeader, uploadAPI }) {
   const [uploadQueue, setUploadQueue] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [onCompleteCallback, setOnCompleteCallback] = useState(null);
+
+  // 註冊上傳完成 callback
+  const registerOnComplete = (callback) => {
+    setOnCompleteCallback(() => callback);
+  };
 
   // 加入任務到佇列
   const addToQueue = (tasks) => {
@@ -86,11 +92,17 @@ export function UploadQueueProvider({ children, authHeader, uploadAPI }) {
           try {
             const response = JSON.parse(xhr.responseText);
             if (response.success) {
-              // 上傳成功
-              setUploadQueue(prev => prev.map(t =>
-                t.id === task.id ? { ...t, status: 'completed', progress: 100 } : t
-              ));
-              resolve();
+              // 上傳成功，通知外部並從佇列中移除
+              if (onCompleteCallback) {
+                onCompleteCallback({
+                  s3Key: task.s3Key,
+                  fileName: task.file.name,
+                  size: task.file.size,
+                  storageClass: task.storageClass,
+                });
+              }
+              setUploadQueue(prev => prev.filter(t => t.id !== task.id));
+              resolve(response);
             } else {
               // API 返回錯誤
               setUploadQueue(prev => prev.map(t =>
@@ -141,6 +153,7 @@ export function UploadQueueProvider({ children, authHeader, uploadAPI }) {
   const value = {
     uploadQueue,
     addToQueue,
+    registerOnComplete,
   };
 
   return (
