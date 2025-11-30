@@ -84,6 +84,41 @@
   margin-bottom: 8px;
 }
 
+.file-select-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.file-select-button {
+  flex: 1;
+  min-width: 160px;
+  padding: 12px 20px;
+  background-color: #f3f4f6;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: inline-block;
+}
+
+.file-select-button:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.file-select-button:active {
+  background-color: #d1d5db;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
 .optional-hint {
   font-weight: 400;
   color: #9ca3af;
