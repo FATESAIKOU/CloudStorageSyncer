@@ -20,7 +20,24 @@ function UploadModal({ show, basePath, onClose }) {
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    setSelectedFiles(files);
+    const fileObjects = files.map(file => ({
+      file: file,
+      relativePath: file.name // 單檔上傳時，relativePath 就是檔名
+    }));
+    setSelectedFiles(fileObjects);
+  };
+
+  const handleDirectorySelect = (e) => {
+    const files = Array.from(e.target.files);
+    const fileObjects = files.map(file => {
+      // webkitRelativePath 包含資料夾結構，例如: "folder/subfolder/file.txt"
+      const relativePath = file.webkitRelativePath || file.name;
+      return {
+        file: file,
+        relativePath: relativePath
+      };
+    });
+    setSelectedFiles(fileObjects);
   };
 
   const handleRemoveFile = (index) => {
@@ -33,18 +50,19 @@ function UploadModal({ show, basePath, onClose }) {
     }
 
     // 建立上傳任務
-    const tasks = selectedFiles.map(file => {
+    const tasks = selectedFiles.map(fileObj => {
       // 構建完整路徑
       let fullPath = basePath;
       if (subFolder.trim()) {
         const cleanSubFolder = subFolder.trim().replace(/^\/+|\/+$/g, '');
         fullPath = fullPath + cleanSubFolder + '/';
       }
-      fullPath = fullPath + file.name;
+      // 使用檔案的相對路徑（保留資料夾結構）
+      fullPath = fullPath + fileObj.relativePath;
 
       return {
         id: crypto.randomUUID(),
-        file: file,
+        file: fileObj.file,
         s3Key: fullPath,
         storageClass: storageClass,
         status: 'pending',
@@ -120,13 +138,29 @@ function UploadModal({ show, basePath, onClose }) {
 
           {/* 檔案選擇 */}
           <div className="upload-section">
-            <label className="upload-label">選擇檔案：</label>
-            <input
-              type="file"
-              multiple
-              onChange={handleFileSelect}
-              className="file-input"
-            />
+            <label className="upload-label">選擇檔案或資料夾：</label>
+            <div className="file-select-buttons">
+              <label className="file-select-button">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="file-input-hidden"
+                />
+                📄 選擇檔案
+              </label>
+              <label className="file-select-button">
+                <input
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  multiple
+                  onChange={handleDirectorySelect}
+                  className="file-input-hidden"
+                />
+                📁 選擇資料夾
+              </label>
+            </div>
           </div>
 
           {/* 已選檔案列表 */}
@@ -136,11 +170,13 @@ function UploadModal({ show, basePath, onClose }) {
                 已選擇 {selectedFiles.length} 個檔案：
               </label>
               <div className="selected-files-list">
-                {selectedFiles.map((file, index) => (
+                {selectedFiles.map((fileObj, index) => (
                   <div key={index} className="selected-file-item">
                     <span className="file-icon">📄</span>
-                    <span className="file-name">{file.name}</span>
-                    <span className="file-size">{formatFileSize(file.size)}</span>
+                    <span className="file-name" title={fileObj.relativePath}>
+                      {fileObj.relativePath}
+                    </span>
+                    <span className="file-size">{formatFileSize(fileObj.file.size)}</span>
                     <button
                       className="remove-file-button"
                       onClick={() => handleRemoveFile(index)}

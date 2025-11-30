@@ -231,18 +231,18 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
     return { directories, files: filesCount };
   }, [fileTreeWithUploads]);
 
-  // 當檔案列表改變時，預設展開第一層
+  // 當路徑或檔案列表實際改變時，預設展開第一層（但不受上傳進度影響）
   useEffect(() => {
-    if (fileTreeWithUploads && fileTreeWithUploads.children) {
+    if (fileTree && fileTree.children) {
       const firstLevelPaths = new Set();
-      fileTreeWithUploads.children.forEach(child => {
+      fileTree.children.forEach(child => {
         if (child.isDirectory) {
           firstLevelPaths.add(child.path);
         }
       });
       setExpandedPaths(firstLevelPaths);
     }
-  }, [fileTreeWithUploads]);
+  }, [fileTree, currentPath]);
 
   const handleToggle = (path) => {
     setExpandedPaths(prev => {
