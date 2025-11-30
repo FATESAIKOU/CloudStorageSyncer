@@ -43,53 +43,84 @@ function FileList({ files, onDownload, onDelete, currentPath }) {
       const { s3Key, file } = task;
       const pathParts = s3Key.split('/').filter(p => p);
       const fileName = pathParts[pathParts.length - 1];
-      const parentPath = pathParts.slice(0, -1).join('/') + (pathParts.length > 1 ? '/' : '');
 
-      // 找到父節點
-      const parentNode = findNodeByPath(clonedTree, parentPath);
+      // 確保所有中間資料夾都存在
+      let currentNode = clonedTree;
+      let accumulatedPath = currentPath || '';
 
-      if (parentNode && parentNode.children) {
-        // 檢查是否已存在（從 S3 API 返回的檔案）
-        const existingIndex = parentNode.children.findIndex(c => c.path === s3Key);
+      // 遍歷路徑，建立或找到所有中間資料夾
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        const folderName = pathParts[i];
+        accumulatedPath = accumulatedPath ? `${accumulatedPath}${folderName}/` : `${folderName}/`;
 
-        if (task.status === 'completed') {
-          // 上傳完成：替換或新增為正常節點
-          const completedNode = {
+        // 確保 children 陣列存在
+        if (!currentNode.children) {
+          currentNode.children = [];
+        }
+
+        // 尋找或建立該資料夾節點
+        let folderNode = currentNode.children.find(c => c.path === accumulatedPath);
+
+        if (!folderNode) {
+          // 建立新的資料夾節點
+          folderNode = {
+            name: folderName,
+            path: accumulatedPath,
+            fullPath: accumulatedPath,
+            isDirectory: true,
+            children: [],
+          };
+          currentNode.children.push(folderNode);
+        }
+
+        currentNode = folderNode;
+      }
+
+      // 現在 currentNode 是父節點
+      if (!currentNode.children) {
+        currentNode.children = [];
+      }
+
+      // 檢查是否已存在（從 S3 API 返回的檔案）
+      const existingIndex = currentNode.children.findIndex(c => c.path === s3Key);
+
+      if (task.status === 'completed') {
+        // 上傳完成：替換或新增為正常節點
+        const completedNode = {
+          name: fileName,
+          path: s3Key,
+          fullPath: s3Key,
+          isDirectory: false,
+          size: file.size,
+          lastModified: new Date().toISOString(), // 使用當前 UTC 時間（ISO 8601 格式）
+          storageClass: task.storageClass || 'STANDARD',
+        };
+
+        if (existingIndex >= 0) {
+          // 替換現有節點
+          currentNode.children[existingIndex] = completedNode;
+        } else {
+          // 新增節點
+          currentNode.children.unshift(completedNode);
+        }
+      } else if (task.status === 'uploading' || task.status === 'pending') {
+        // 上傳中：顯示臨時上傳節點
+        if (existingIndex < 0) {
+          currentNode.children.unshift({
             name: fileName,
             path: s3Key,
             fullPath: s3Key,
             isDirectory: false,
-            size: file.size,
-            lastModified: new Date().toISOString(), // 使用當前 UTC 時間（ISO 8601 格式）
-            storageClass: task.storageClass || 'STANDARD',
-          };
-
-          if (existingIndex >= 0) {
-            // 替換現有節點
-            parentNode.children[existingIndex] = completedNode;
-          } else {
-            // 新增節點
-            parentNode.children.unshift(completedNode);
-          }
-        } else if (task.status === 'uploading' || task.status === 'pending') {
-          // 上傳中：顯示臨時上傳節點
-          if (existingIndex < 0) {
-            parentNode.children.unshift({
-              name: fileName,
-              path: s3Key,
-              fullPath: s3Key,
-              isDirectory: false,
-              isUploading: true,
-              uploadTask: {
-                id: task.id,
-                status: task.status,
-                progress: task.progress || 0,
-                speed: task.speed || 0,
-                uploadedBytes: task.uploadedBytes || 0,
-                totalBytes: task.totalBytes || file.size,
-              },
-            });
-          }
+            isUploading: true,
+            uploadTask: {
+              id: task.id,
+              status: task.status,
+              progress: task.progress || 0,
+              speed: task.speed || 0,
+              uploadedBytes: task.uploadedBytes || 0,
+              totalBytes: task.totalBytes || file.size,
+            },
+          });
         }
       }
     });
