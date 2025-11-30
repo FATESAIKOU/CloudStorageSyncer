@@ -173,11 +173,6 @@ function FileListPage({ authData, onLogout, onAuthError }) {
     setToolbarUploadModal({ show: false });
   };
 
-  const handleToolbarUploadComplete = async () => {
-    handleCloseToolbarUploadModal();
-    await loadFiles(currentPath);
-  };
-
   // 初始載入
   useEffect(() => {
     loadFiles();
@@ -215,8 +210,6 @@ function FileListPage({ authData, onLogout, onAuthError }) {
             files={files}
             onDownload={handleDownload}
             onDelete={handleDeleteClick}
-            onUpload={handleUpload}
-            onUploadComplete={handleUploadModalComplete}
             currentPath={currentPath}
           />
         )}
@@ -228,8 +221,6 @@ function FileListPage({ authData, onLogout, onAuthError }) {
           show={toolbarUploadModal.show}
           basePath={currentPath}
           onClose={handleCloseToolbarUploadModal}
-          onComplete={handleToolbarUploadComplete}
-          onUpload={handleUpload}
         />
       )}
 

@@ -3,6 +3,8 @@ import './App.css';
 import LoginPage from './pages/LoginPage/pageMain';
 import FileListPage from './pages/FileListPage/pageMain';
 import { loadAuthData, clearAuthData, isAuthDataValid, isAuthExpired } from './utils/auth';
+import { UploadQueueProvider } from './contexts/UploadQueueContext';
+import { fileAPI } from './utils/api';
 
 function App() {
   const [authData, setAuthData] = useState(null);
@@ -41,13 +43,20 @@ function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // 上傳 API 函數（傳給 UploadQueueProvider）
+  const handleUploadAPI = async (file, s3Key, storageClass) => {
+    return await fileAPI.upload(authData.authHeader, file, s3Key, storageClass);
+  };
+
   // 已認證，顯示檔案列表頁面
   return (
-    <FileListPage
-      authData={authData}
-      onLogout={handleLogout}
-      onAuthError={handleAuthError}
-    />
+    <UploadQueueProvider authHeader={authData.authHeader} uploadAPI={handleUploadAPI}>
+      <FileListPage
+        authData={authData}
+        onLogout={handleLogout}
+        onAuthError={handleAuthError}
+      />
+    </UploadQueueProvider>
   );
 }
 

@@ -4,7 +4,7 @@ import TreeNode from './TreeNode';
 import UploadModal from './UploadModal';
 import { buildFileTree, getAllPaths } from '../../utils/fileTree';
 
-function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, currentPath }) {
+function FileList({ files, onDownload, onDelete, currentPath }) {
   const [expandedPaths, setExpandedPaths] = useState(new Set());
   const [uploadModal, setUploadModal] = useState({ show: false, targetPath: '' });
 
@@ -92,14 +92,6 @@ function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, cur
     setUploadModal({ show: false, targetPath: '' });
   };
 
-  const handleUploadModalComplete = async () => {
-    // Modal 完成時，先關閉 Modal，再重新載入列表
-    handleCloseUploadModal();
-    if (onUploadComplete) {
-      await onUploadComplete();
-    }
-  };
-
   if (!files || files.length === 0) {
     return (
       <div className="file-list-empty">
@@ -149,8 +141,6 @@ function FileList({ files, onDownload, onDelete, onUpload, onUploadComplete, cur
         show={uploadModal.show}
         basePath={uploadModal.targetPath}
         onClose={handleCloseUploadModal}
-        onComplete={handleUploadModalComplete}
-        onUpload={onUpload}
       />
     </div>
   );
